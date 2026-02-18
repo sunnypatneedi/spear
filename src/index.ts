@@ -28,6 +28,15 @@ export type {
   TelemetryEvent
 } from './core/runtime.js';
 
+// Session API — stateful context for multi-step agent loops
+export { SpearSession } from './core/session.js';
+export type {
+  SessionOptions,
+  StepResult,
+  ToolBatchResult,
+  SessionCompletionResult
+} from './core/session.js';
+
 // Policy management
 export {
   loadPolicy,

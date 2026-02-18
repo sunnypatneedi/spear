@@ -25,6 +25,7 @@ import {
 import { CanaryManager } from './canary.js';
 import type { Provenance, ProvenanceLevel, ProvenancePolicy } from './provenance.js';
 import { createProvenance, deriveProvenance, serializeProvenance } from './provenance.js';
+import { SpearSession, type SessionOptions } from './session.js';
 
 /**
  * Runtime configuration options
@@ -463,6 +464,42 @@ export class SpearRuntime {
     const contextKey = sessionId || 'default';
     const context = this.toolContexts.get(contextKey);
     return context?.outputProvenance || [];
+  }
+
+  /**
+   * Create a session-scoped security context for multi-step agent loops
+   *
+   * The session wraps pre/post/tools into a stateful object that:
+   * - Threads a single canary across ALL steps in the loop
+   * - Accumulates peak risk score across the full session
+   * - Provides batch parallel tool checking for concurrent tool_calls
+   *
+   * @param options Session configuration (sessionId required)
+   * @returns SpearSession instance for this agent loop
+   *
+   * @example
+   * ```typescript
+   * const session = spear.session({ sessionId: 'agent-001' });
+   *
+   * // ReAct loop
+   * while (true) {
+   *   const step = await session.step(messages);
+   *   if (!step.allowed) break;
+   *
+   *   const llmResponse = await llm(step.messages);
+   *   if (!llmResponse.tool_calls?.length) {
+   *     const final = await session.complete(llmResponse.content);
+   *     return final.output;
+   *   }
+   *
+   *   const { allowed } = await session.tools(llmResponse.tool_calls);
+   *   session.observe(await executeAll(allowed), { source: 'external' });
+   *   messages = buildFollowUp(llmResponse, results);
+   * }
+   * ```
+   */
+  session(options: SessionOptions): SpearSession {
+    return new SpearSession(this, options);
   }
 }
 

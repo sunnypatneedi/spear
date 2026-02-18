@@ -27,6 +27,153 @@ Spear addresses all three.
 
 ---
 
+## Three ways to use Spear
+
+| Track | Who it's for | How |
+|-------|-------------|-----|
+| **Library** | Node.js / TypeScript builders | `npm install` — call `spear.pre()` / `spear.post()` |
+| **Session API** | Multi-step agent loops (ReAct, LangChain JS, Vercel AI SDK) | `spear.session()` — threads canary + provenance across steps |
+| **HTTP API** | Python / Go / Flowise / Dify builders | Docker container — REST calls, no npm (roadmap) |
+
+---
+
+## Track 1: Library — single-request guard
+
+```typescript
+import { quick } from '@sunnypatneedi/spear';
+
+const spear = quick('balanced');  // 'balanced' | 'safe' | 'permissive'
+
+// 1. Pre-gate: scan input, embed canary, sanitize
+const pre = await spear.pre(messages, { sessionId: req.sessionId });
+
+if (!pre.allowed) {
+  return res.status(400).json({ error: 'Request blocked' });
+}
+
+// 2. Your LLM call — use pre.messages (sanitized + canary-aware)
+const response = await openai.chat.completions.create({
+  model: 'gpt-4o',
+  messages: pre.messages,
+  system: `You are a helpful assistant. ${pre.canary}` // canary embedded here
+});
+
+// 3. Post-gate: scan output, detect exfiltration, mask PII
+const post = await spear.post({
+  output: response.choices[0].message.content,
+  canary: pre.canary
+});
+
+if (!post.allowed) {
+  return res.status(400).json({ error: 'Response blocked' });
+}
+
+return res.json({ response: post.output });
+```
+
+That's it. Every request is now guarded end-to-end.
+
+---
+
+## Track 2: Session API — multi-step agent loops
+
+Single-request `pre/post` breaks in agent loops. A canary embedded in step 1 must be detectable if the LLM leaks it in step 5. Tool calls arrive in parallel. RAG chunks from step 2 can taint arguments in step 4.
+
+`spear.session()` handles all of this:
+
+```typescript
+import { quick } from '@sunnypatneedi/spear';
+
+const spear = quick('balanced', { mode: 'enforce' });
+const session = spear.session({ sessionId: 'agent-001', userId: 'u-42' });
+
+// --- ReAct loop ---
+let messages = initialMessages;
+
+while (true) {
+  // Step N: pre-gate. Same canary persists across all steps.
+  const step = await session.step(messages);
+  if (!step.allowed) {
+    console.error('Injection detected at step', step.stepIndex, ':', step.reason);
+    break;
+  }
+
+  const llmResponse = await openai.chat.completions.create({
+    model: 'gpt-4o',
+    messages: step.messages,  // sanitized
+    system: `You are a research agent. ${spear.pre.canary}`,
+    tools: myTools
+  });
+
+  // No tool calls → agent is done
+  if (!llmResponse.choices[0].message.tool_calls?.length) {
+    // Final output gate — checks session-accumulated canary
+    const final = await session.complete(llmResponse.choices[0].message.content ?? '');
+    if (!final.allowed) throw new Error(`Output blocked: ${final.reason}`);
+    return final.output;  // safe to return
+  }
+
+  // Batch parallel tool checks — agents fire multiple tools simultaneously
+  const { allowed, blocked } = await session.tools(
+    llmResponse.choices[0].message.tool_calls.map(tc => ({
+      name: tc.function.name,
+      arguments: JSON.parse(tc.function.arguments),
+      id: tc.id
+    }))
+  );
+
+  if (blocked.length > 0) {
+    console.warn('Blocked tools:', blocked.map(b => b.reason));
+  }
+
+  // Execute only allowed tools
+  const results = await Promise.all(allowed.map(r => executeTool(r)));
+
+  // Tag tool outputs with provenance source (external data = lower trust)
+  session.observe(results, { source: 'external' });
+
+  // Build next step messages
+  messages = buildFollowUp(llmResponse, results);
+}
+```
+
+### Why session() is different from calling pre() in a loop
+
+| | Calling `pre()` per iteration | `session.step()` |
+|--|-------------------------------|-----------------|
+| Canary | New canary per step — exfil across steps undetectable | **Single canary across all steps** |
+| Risk score | Isolated per step | **Accumulated peak across session** |
+| Tool batch | Singular `mediateToolCall()` | **`tools([A,B,C])` checks all at once** |
+| Provenance | Resets each call | **Persists taint records across steps** |
+
+---
+
+## Track 3: HTTP API — Python, Go, Flowise, Dify (roadmap)
+
+Most agent platforms — LangChain Python, CrewAI, AutoGPT, Dify, Flowise — cannot install npm packages. They need Spear as a service.
+
+**Planned**: A Docker container exposing Spear as a REST API:
+
+```bash
+docker run -p 7700:7700 \
+  -e SPEAR_MODE=enforce \
+  -e SPEAR_POLICY=balanced \
+  sunnypatneedi/spear-api
+
+# Python
+import requests
+result = requests.post('http://localhost:7700/pre', json={"messages": messages})
+
+# LangChain Python middleware
+class SpearGuardrail(BaseCallbackHandler):
+    def on_llm_start(self, serialized, prompts, **kwargs):
+        return requests.post('http://localhost:7700/pre', json={"messages": prompts})
+```
+
+Track progress: [GitHub Issue #22](https://github.com/sunnypatneedi/spear/issues/22) — HTTP API for Python/polyglot builders.
+
+---
+
 ## How it works
 
 Every request flows through four gates in sequence:
@@ -65,44 +212,6 @@ User Input
 
 ---
 
-## Quick start
-
-```typescript
-import { quick } from '@sunnypatneedi/spear';
-
-const spear = quick('balanced');  // 'balanced' | 'safe' | 'permissive'
-
-// 1. Pre-gate: scan input, embed canary, sanitize
-const pre = await spear.pre(messages, { sessionId: req.sessionId });
-
-if (!pre.allowed) {
-  return res.status(400).json({ error: 'Request blocked' });
-}
-
-// 2. Your LLM call — use pre.messages (sanitized)
-const response = await openai.chat.completions.create({
-  model: 'gpt-4o',
-  messages: pre.messages,
-  system: `You are a helpful assistant. ${pre.canary}` // canary embedded here
-});
-
-// 3. Post-gate: scan output, detect exfiltration, mask PII
-const post = await spear.post({
-  output: response.choices[0].message.content,
-  canary: pre.canary
-});
-
-if (!post.allowed) {
-  return res.status(400).json({ error: 'Response blocked' });
-}
-
-return res.json({ response: post.output });
-```
-
-That's it. Every request is now guarded end-to-end.
-
----
-
 ## The three things that make Spear different
 
 ### 1. It guards your pipeline, not just your model
@@ -110,16 +219,16 @@ That's it. Every request is now guarded end-to-end.
 Model providers filter conversations. They cannot see inside your tool responses, RAG retrievals, or database results. Spear's **ToolMediator** implements [CaMeL-inspired](https://arxiv.org/abs/2503.18813) data provenance: every value flowing through your agent is tagged with where it came from (`system`, `user`, `assistant`, `tool`, `external`, `untrusted`). A tool argument that originated from an untrusted web scrape cannot trigger a privileged action — regardless of what the LLM decided.
 
 ```typescript
-import { createRuntime, tagValue, ProvenanceSource } from '@sunnypatneedi/spear';
+import { tagValue, ProvenanceSource } from '@sunnypatneedi/spear';
 
 // Tag data from external sources as untrusted
 const ragResult = tagValue(fetchedDocument, ProvenanceSource.external('web-search'));
 
 // ToolMediator checks provenance before allowing tool calls
-const mediation = await spear.tool({
+const { allowed } = await session.tools([{
   name: 'send_email',
   arguments: { body: ragResult } // blocked — untrusted source cannot trigger email
-}, context);
+}]);
 ```
 
 ### 2. Canary tokens make exfiltration visible
@@ -131,7 +240,7 @@ Without canaries:  attacker extracts system prompt → you never know
 With canaries:     attacker triggers canary in output → OutputGate blocks + logs
 ```
 
-The attack goes from invisible to auditable.
+With the **session API**, this canary persists across the entire multi-step loop. An exfiltration attempt in step 5 that leaks a canary from step 1 is caught at `session.complete()`.
 
 ### 3. Policy-as-code with shadow mode
 
@@ -211,7 +320,7 @@ const spear = quick('balanced', { mode: 'shadow' });
 
 // Review telemetry
 const events = spear.getTelemetry();
-// [{ type: 'pre_blocked', gate: 'input', reason: 'Matched pattern...', ... }]
+// [{ type: 'block', gate: 'input', reason: 'Matched pattern...', ... }]
 
 // Flip to enforce when ready
 const spear = quick('balanced', { mode: 'enforce' });
@@ -272,14 +381,36 @@ const { allowed, reason, output, riskScore } = await spear.post(
 );
 ```
 
-### `runtime.tool(toolCall, context)`
+### `runtime.session(options)` — agent loop API
 
-Runs ToolMediator. Checks RBAC, argument provenance, call depth.
+Creates a stateful security context for a multi-step agent loop.
 
 ```typescript
-const { allowed, reason, violations } = await spear.tool(
+const session = spear.session({ sessionId: 'loop-001', userId: 'u-42' });
+
+// Pre-gate a step (accumulates canary + risk across steps)
+const step = await session.step(messages);
+
+// Batch parallel tool checks
+const { allowed, blocked } = await session.tools([callA, callB, callC]);
+
+// Tag tool results with provenance source
+session.observe(results, { source: 'external' });
+
+// Final output gate with session-accumulated canary
+const final = await session.complete(llmFinalOutput);
+// final.sessionRiskScore — peak risk across all steps
+// final.stepCount — how many steps ran
+```
+
+### `runtime.mediateToolCall(toolCall, sessionId?)`
+
+Single tool call mediation with CaMeL capability enforcement.
+
+```typescript
+const { allowed, reason } = await spear.mediateToolCall(
   { name: 'send_email', arguments: { to, body } },
-  mediationContext
+  sessionId
 );
 ```
 
@@ -334,6 +465,7 @@ Without the sidecar, Spear runs fully in-process. The sidecar is optional but re
 | Indirect injection (RAG/tools) | ✅ | ❌ | ❌ | ❌ | ❌ |
 | Canary exfiltration detection | ✅ | ❌ | ❌ | ❌ | ❌ |
 | CaMeL data provenance | ✅ | ❌ | ❌ | ❌ | ❌ |
+| Session-scoped agent API | ✅ | ❌ | ❌ | ❌ | ❌ |
 | Shadow mode (observe before block) | ✅ | ❌ | ❌ | ❌ | ❌ |
 | Policy-as-code (YAML + CI eval) | ✅ | partial | ✅ | ❌ | ❌ |
 | Tool RBAC | ✅ | ❌ | ❌ | ❌ | ❌ |
@@ -344,6 +476,12 @@ Without the sidecar, Spear runs fully in-process. The sidecar is optional but re
 ## Roadmap
 
 See [GitHub Issues](https://github.com/sunnypatneedi/spear/issues) — prioritized into phases.
+
+**Near-term:**
+- [#22] HTTP API — Docker container for Python/Go/Flowise/Dify builders
+- [#23] Python SDK — native Pythonic API wrapping the HTTP API
+- [#24] LangChain Python integration — drop-in callback handler
+- [#25] Session taint propagation v2 — `observe()` fully wires into ToolMediator argument checks
 
 ---
 
