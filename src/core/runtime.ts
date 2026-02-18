@@ -24,7 +24,6 @@ import {
 } from '../gates/tool_mediator.js';
 import { CanaryManager } from './canary.js';
 import type { Provenance, ProvenanceLevel, ProvenancePolicy } from './provenance.js';
-import { createProvenance, deriveProvenance, serializeProvenance } from './provenance.js';
 import { SpearSession, type SessionOptions } from './session.js';
 
 /**
