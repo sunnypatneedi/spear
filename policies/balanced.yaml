@@ -100,7 +100,7 @@ tools:
     max_depth: 2
 
 # Environment-controlled mode (shadow|enforce)
-mode: ${SAPPS_MODE|shadow}
+mode: ${SPEAR_MODE|shadow}
 
 # Performance budgets (milliseconds)
 latency_budget_ms: 350

@@ -198,8 +198,8 @@ export type Policy = z.infer<typeof policySchema>;
  * 
  * @example
  * ```typescript
- * // Environment: SAPPS_MODE=enforce
- * interpolateEnvVars("${SAPPS_MODE|shadow}"); // Returns: "enforce"
+ * // Environment: SPEAR_MODE=enforce
+ * interpolateEnvVars("${SPEAR_MODE|shadow}"); // Returns: "enforce"
  * interpolateEnvVars("${UNKNOWN|shadow}");    // Returns: "shadow"
  * ```
  */

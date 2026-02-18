@@ -6,7 +6,7 @@
  */
 
 import { describe, it, expect, beforeEach } from 'vitest';
-import { createRuntime, type SAPPSRuntime, type TelemetryEvent } from '../src/core/runtime.js';
+import { createRuntime, type SpearRuntime, type TelemetryEvent } from '../src/core/runtime.js';
 import { loadPolicyFromString, getDefaultPolicy, type Policy } from '../src/core/policy.js';
 import { readFileSync } from 'fs';
 import { resolve } from 'path';
@@ -25,8 +25,8 @@ function loadTestPolicy(): Policy {
 }
 
 describe('Enforce Mode Behavior', () => {
-  let shadowRuntime: SAPPSRuntime;
-  let enforceRuntime: SAPPSRuntime;
+  let shadowRuntime: SpearRuntime;
+  let enforceRuntime: SpearRuntime;
   let policy: Policy;
 
   beforeEach(() => {
@@ -231,7 +231,7 @@ describe('Phased Rollout Support', () => {
   it('environment variable controls mode', () => {
     const policy = loadTestPolicy();
 
-    // Policy should respect SAPPS_MODE env var via template
+    // Policy should respect SPEAR_MODE env var via template
     expect(policy.mode).toBeDefined();
     // Default should be shadow when env not set
   });

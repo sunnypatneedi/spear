@@ -1,16 +1,16 @@
 /**
- * SayMake OpenAI Client Adapter
+ * Spear OpenAI Adapter
  * 
- * Provides guardChat() wrapper for protecting all LLM calls in SayMake.
- * Integrates with @saymake/openai-client and provides drop-in security.
+ * Provides guardChat() wrapper for protecting LLM calls.
+ * Wraps any LLM function with Spear input/output gates for drop-in security.
  */
 
-import { createRuntime, type SAPPSRuntime } from '../core/runtime.js';
+import { createRuntime, type SpearRuntime } from '../core/runtime.js';
 import { loadPolicy } from '../core/policy.js';
 import type { Message } from '../gates/input_gate.js';
 
 /**
- * Guard context for SayMake integrations
+ * Guard context for Spear integrations
  */
 export interface GuardContext {
   userId?: string;
@@ -35,14 +35,14 @@ export interface GuardResult {
 }
 
 /**
- * LLM function signature (compatible with SayMake's openai-client)
+ * LLM function signature (compatible with any OpenAI-style client)
  */
 export type LLMFunction = (messages: Message[]) => Promise<string> | string;
 
 /**
  * Global SAPPS runtime instance (singleton)
  */
-let globalRuntime: SAPPSRuntime | null = null;
+let globalRuntime: SpearRuntime | null = null;
 
 /**
  * Initialize global SAPPS runtime
@@ -53,22 +53,22 @@ let globalRuntime: SAPPSRuntime | null = null;
  * 
  * @example
  * ```typescript
- * import { initializeSAPPS } from 'spear/adapters/openai-client';
+ * import { initializeSpear } from 'spear/adapters/openai-client';
  * 
- * initializeSAPPS({
+ * initializeSpear({
  *   policyName: 'balanced',
- *   mode: process.env.SAPPS_MODE as any,
- *   sidecarUrl: process.env.SAPPS_SIDECAR_URL
+ *   mode: process.env.SPEAR_MODE as any,
+ *   sidecarUrl: process.env.SPEAR_SIDECAR_URL
  * });
  * ```
  */
-export function initializeSAPPS(options: {
+export function initializeSpear(options: {
   policyName?: string;
   policyPath?: string;
   mode?: 'shadow' | 'enforce';
   sidecarUrl?: string;
   budgetMs?: number;
-} = {}): SAPPSRuntime {
+} = {}): SpearRuntime {
   const {
     policyName = 'balanced',
     policyPath,
@@ -94,9 +94,9 @@ export function initializeSAPPS(options: {
 /**
  * Get global SAPPS runtime (initializes with defaults if not already initialized)
  */
-export function getRuntime(): SAPPSRuntime {
+export function getRuntime(): SpearRuntime {
   if (!globalRuntime) {
-    globalRuntime = initializeSAPPS();
+    globalRuntime = initializeSpear();
   }
   return globalRuntime;
 }
@@ -114,7 +114,7 @@ export function getRuntime(): SAPPSRuntime {
  * @example
  * ```typescript
  * import { guardChat } from 'spear/adapters/openai-client';
- * import { runAssistant } from '@saymake/openai-client';
+ * // replace with your actual LLM SDK import
  * 
  * const result = await guardChat(
  *   [{ role: 'user', content: 'Hello!' }],
@@ -197,7 +197,7 @@ export async function guardChat(
     
     return {
       allowed: true,
-      reason: `SAPPS error (fail-open): ${error instanceof Error ? error.message : String(error)}`,
+      reason: `Spear error (fail-open): ${error instanceof Error ? error.message : String(error)}`,
       output: error instanceof Error ? error.message : 'An error occurred',
       telemetry: {
         inputScore: 0,

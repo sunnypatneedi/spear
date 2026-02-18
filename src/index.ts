@@ -13,12 +13,12 @@
  */
 
 // Import for internal use (quick function)
-import { createRuntime as createRuntimeImpl, type SAPPSRuntime } from './core/runtime.js';
+import { createRuntime as createRuntimeImpl, type SpearRuntime } from './core/runtime.js';
 import { loadPolicy as loadPolicyImpl, type Policy } from './core/policy.js';
 import type { RuntimeOptions } from './core/runtime.js';
 
 // Core runtime
-export { createRuntime, SAPPSRuntime } from './core/runtime.js';
+export { createRuntime, SpearRuntime } from './core/runtime.js';
 export type {
   RuntimeOptions,
   PreContext,
@@ -184,7 +184,7 @@ export const VERSION = '0.1.0';
  *
  * const runtime = quick('balanced', {
  *   mode: 'shadow',
- *   sidecarUrl: process.env.SAPPS_SIDECAR_URL
+ *   sidecarUrl: process.env.SPEAR_SIDECAR_URL
  * });
  * ```
  */
@@ -197,7 +197,7 @@ export function quick(
     enableLogging: boolean;
     policy: Policy;
   }> = {}
-): SAPPSRuntime {
+): SpearRuntime {
   const policy = options.policy || loadPolicyImpl(`${policyName}.yaml`);
   return createRuntimeImpl({ ...options, policy } as RuntimeOptions);
 }

@@ -74,7 +74,7 @@ EOF
 
 ```bash
 # 1. Configure shadow mode
-export SAPPS_MODE=shadow
+export SPEAR_MODE=shadow
 
 # 2. Deploy protected edge function
 supabase functions deploy summarize-interaction

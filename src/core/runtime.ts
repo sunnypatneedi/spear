@@ -102,7 +102,7 @@ export interface TelemetryEvent {
 /**
  * SAPPS Runtime class
  */
-export class SAPPSRuntime {
+export class SpearRuntime {
   private policy: Policy;
   private mode: 'shadow' | 'enforce';
   private sidecarOptions: SidecarOptions;
@@ -492,7 +492,7 @@ export class SAPPSRuntime {
  * });
  * ```
  */
-export function createRuntime(options: RuntimeOptions): SAPPSRuntime {
-  return new SAPPSRuntime(options);
+export function createRuntime(options: RuntimeOptions): SpearRuntime {
+  return new SpearRuntime(options);
 }
 

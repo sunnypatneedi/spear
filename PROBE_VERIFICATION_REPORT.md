@@ -391,7 +391,7 @@ pnpm test:probes
 
 ```bash
 # Configure
-export SAPPS_MODE=shadow
+export SPEAR_MODE=shadow
 
 # Deploy
 supabase functions deploy summarize-interaction
@@ -413,7 +413,7 @@ supabase functions logs --all | grep SAPPS
 
 After shadow mode validation:
 ```bash
-export SAPPS_MODE=enforce
+export SPEAR_MODE=enforce
 # Gradual rollout per service
 ```
 

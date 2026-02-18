@@ -24,3 +24,4 @@ eval/report.json
 
 # Claude internals
 .claude/
+.entire/

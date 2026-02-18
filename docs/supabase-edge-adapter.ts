@@ -86,7 +86,7 @@ export function checkEdgeOutput(
         };
       }
       // Shadow mode: allow but log
-      console.warn('[SAPPS Shadow] Output contains deny-listed phrase:', phrase);
+      console.warn('[Spear Shadow] Output contains deny-listed phrase:', phrase);
     }
   }
   
@@ -128,7 +128,7 @@ export function guardEdgeFunction<T>(
         const inputCheck = checkEdgeInput(content, policy);
         
         if (!inputCheck.allowed) {
-          console.warn('[SAPPS] Blocked request:', inputCheck.reason);
+          console.warn('[Spear] Blocked request:', inputCheck.reason);
           
           if (policy.mode === 'enforce') {
             return new Response(
@@ -153,7 +153,7 @@ export function guardEdgeFunction<T>(
       const outputCheck = checkEdgeOutput(resultString, policy);
       
       if (!outputCheck.allowed) {
-        console.error('[SAPPS] Blocked output - potential leak detected');
+        console.error('[Spear] Blocked output - potential leak detected');
         
         return new Response(
           JSON.stringify({ error: policy.refusalMessage }),
@@ -173,7 +173,7 @@ export function guardEdgeFunction<T>(
       );
       
     } catch (error) {
-      console.error('[SAPPS] Handler error:', error);
+      console.error('[Spear] Handler error:', error);
       
       return new Response(
         JSON.stringify({ error: 'Internal server error' }),
