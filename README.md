@@ -4,6 +4,9 @@
 
 Blocks prompt injection, jailbreaks, PII leaks, and unicode attacks — at every stage of your LLM pipeline, before they reach your model or your users.
 
+<img width="2816" height="1536" alt="Gemini_Generated_Image_frvxrmfrvxrmfrvx" src="https://github.com/user-attachments/assets/0d7267c4-8630-47a5-84af-9ed81dd1b821" />
+
+Install (recommended)
 ```
 npm install spear
 ```
