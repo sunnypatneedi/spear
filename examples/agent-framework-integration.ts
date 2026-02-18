@@ -5,7 +5,7 @@
  * Replace `callYourLLM` with your actual OpenAI / Anthropic / Gemini call.
  */
 
-import { quick } from 'spear';
+import { quick } from '@sunnypatneedi/spear';
 
 const runtime = quick('balanced', { mode: 'shadow' });
 

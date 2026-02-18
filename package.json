@@ -1,5 +1,5 @@
 {
-  "name": "spear",
+  "name": "@sunnypatneedi/spear",
   "version": "0.1.0",
   "description": "Defense-in-depth security middleware for LLM I/O pipelines — blocks prompt injection, PII leaks, and jailbreaks",
   "license": "Apache-2.0",

@@ -8,7 +8,7 @@ Blocks prompt injection, jailbreaks, PII leaks, and unicode attacks — at every
 
 Install (recommended)
 ```
-npm install spear
+npm install @sunnypatneedi/spear
 ```
 
 ---
@@ -36,7 +36,7 @@ User Input → InputGate → InstructionShield → [Your LLM] → OutputGate →
 ## Quick Start
 
 ```typescript
-import { quick } from 'spear';
+import { quick } from '@sunnypatneedi/spear';
 
 // One line to get a guarded runtime
 const runtime = quick('balanced');  // or 'safe' | 'permissive'
@@ -66,9 +66,9 @@ See [QUICK_START.md](./QUICK_START.md) for a full walkthrough including enforce 
 ## Installation
 
 ```bash
-npm install spear
+npm install @sunnypatneedi/spear
 # or
-pnpm add spear
+pnpm add @sunnypatneedi/spear
 ```
 
 Requires Node.js ≥ 18 (ESM).
@@ -88,7 +88,7 @@ Three built-in policy profiles ship with the package:
 Load by name or bring your own YAML:
 
 ```typescript
-import { quick, loadPolicy, createRuntime } from 'spear';
+import { quick, loadPolicy, createRuntime } from '@sunnypatneedi/spear';
 
 // By name (uses bundled policy files)
 const runtime = quick('safe');
@@ -167,19 +167,19 @@ Runs OutputGate. Returns:
 All gates are individually importable for custom pipelines:
 
 ```typescript
-import { inputGate, outputGate, instructionShield, toolMediator } from 'spear';
+import { inputGate, outputGate, instructionShield, toolMediator } from '@sunnypatneedi/spear';
 ```
 
 ### PII utilities
 
 ```typescript
-import { detectPII, maskPII, tokenizePII, detokenizePII } from 'spear';
+import { detectPII, maskPII, tokenizePII, detokenizePII } from '@sunnypatneedi/spear';
 ```
 
 ### Data provenance (CaMeL-inspired)
 
 ```typescript
-import { tagValue, createProvenance, checkCapabilities } from 'spear';
+import { tagValue, createProvenance, checkCapabilities } from '@sunnypatneedi/spear';
 ```
 
 ---

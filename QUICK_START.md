@@ -123,7 +123,7 @@ curl -X POST 'http://localhost:54321/functions/v1/summarize-interaction' \
 ```typescript
 // packages/sapps/examples/quick-test.ts
 
-import { quick } from 'spear';
+import { quick } from '@sunnypatneedi/spear';
 
 const runtime = quick('balanced', { mode: 'enforce' });
 

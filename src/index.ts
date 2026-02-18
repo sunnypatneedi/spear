@@ -180,7 +180,7 @@ export const VERSION = '0.1.0';
  *
  * @example
  * ```typescript
- * import { quick } from 'spear';
+ * import { quick } from '@sunnypatneedi/spear';
  *
  * const runtime = quick('balanced', {
  *   mode: 'shadow',
