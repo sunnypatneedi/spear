@@ -171,6 +171,7 @@ class SpearGuardrail(BaseCallbackHandler):
 ```
 
 Track progress: [GitHub Issue #22](https://github.com/sunnypatneedi/spear/issues/22) — HTTP API for Python/polyglot builders.
+Python SDK: [GitHub Issue #23](https://github.com/sunnypatneedi/spear/issues/23).
 
 ---
 
@@ -478,10 +479,10 @@ Without the sidecar, Spear runs fully in-process. The sidecar is optional but re
 See [GitHub Issues](https://github.com/sunnypatneedi/spear/issues) — prioritized into phases.
 
 **Near-term:**
-- [#22] HTTP API — Docker container for Python/Go/Flowise/Dify builders
-- [#23] Python SDK — native Pythonic API wrapping the HTTP API
-- [#24] LangChain Python integration — drop-in callback handler
-- [#25] Session taint propagation v2 — `observe()` fully wires into ToolMediator argument checks
+- [#22 HTTP API](https://github.com/sunnypatneedi/spear/issues/22) — Docker container for Python/Go/Flowise/Dify builders
+- [#23 Python SDK](https://github.com/sunnypatneedi/spear/issues/23) — native Pythonic API wrapping the HTTP API
+- [#24 Session taint v2](https://github.com/sunnypatneedi/spear/issues/24) — `observe()` fully wires into ToolMediator argument checks
+- [#25 LangChain integration](https://github.com/sunnypatneedi/spear/issues/25) — drop-in callback handler
 
 ---
 
