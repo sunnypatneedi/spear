@@ -14,14 +14,19 @@
  */
 
 import { describe, it, expect, beforeEach } from 'vitest';
-import { inputGate, type Message } from '../src/gates/input_gate';
-import { instructionShield } from '../src/gates/instruction_shield';
-import { outputGate } from '../src/gates/output_gate';
-import { toolMediator, createMediationContext, type ToolCall } from '../src/gates/tool_mediator';
-import { getDefaultPolicy, loadPolicyFromString } from '../src/core/policy';
-import { generateCanary } from '../src/core/canary';
+import { inputGate, type Message } from '../src/gates/input_gate.js';
+import { instructionShield } from '../src/gates/instruction_shield.js';
+import { outputGate } from '../src/gates/output_gate.js';
+import { toolMediator, createMediationContext, type ToolCall } from '../src/gates/tool_mediator.js';
+import { getDefaultPolicy, loadPolicyFromString } from '../src/core/policy.js';
+import { generateCanary } from '../src/core/canary.js';
 import { readFileSync } from 'fs';
-import { resolve } from 'path';
+import { resolve, dirname } from 'path';
+import { fileURLToPath } from 'url';
+
+// ESM-safe __dirname (package.json "type":"module" + NodeNext tsconfig = no __dirname)
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 // Load actual policy with attack patterns for testing
 function getTestPolicy() {

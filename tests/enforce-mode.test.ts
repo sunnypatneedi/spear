@@ -9,7 +9,12 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import { createRuntime, type SpearRuntime, type TelemetryEvent } from '../src/core/runtime.js';
 import { loadPolicyFromString, getDefaultPolicy, type Policy } from '../src/core/policy.js';
 import { readFileSync } from 'fs';
-import { resolve } from 'path';
+import { resolve, dirname } from 'path';
+import { fileURLToPath } from 'url';
+
+// ESM-safe __dirname (package.json "type":"module" + NodeNext tsconfig = no __dirname)
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 // Load actual policy
 function loadTestPolicy(): Policy {

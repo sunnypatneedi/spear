@@ -13,7 +13,12 @@ import { inputGate } from '../src/gates/input_gate.js';
 import { instructionShield } from '../src/gates/instruction_shield.js';
 import { outputGate } from '../src/gates/output_gate.js';
 import { readFileSync } from 'fs';
-import { resolve } from 'path';
+import { resolve, dirname } from 'path';
+import { fileURLToPath } from 'url';
+
+// ESM-safe __dirname (package.json "type":"module" + NodeNext tsconfig = no __dirname)
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 // Load actual policy with attack patterns for testing
 function getTestPolicy() {
@@ -50,6 +55,21 @@ describe('Unicode Sanitization', () => {
   it('should detect suspicious unicode', () => {
     expect(hasSuspiciousUnicode('Hello\u202EWorld')).toBe(true);
     expect(hasSuspiciousUnicode('Hello World')).toBe(false);
+  });
+
+  it('should detect suspicious unicode consistently on repeated calls (stateful /g regression)', () => {
+    // Regression: hasSuspiciousUnicode previously used module-level /g regexes.
+    // .test() on a /g regex advances lastIndex, so the 2nd call on the same
+    // matching string would return false. This test catches that regression.
+    const bidiAttack = 'inject\u202Epayload';
+    const zwsAttack = 'hide\u200Bcontent';
+    expect(hasSuspiciousUnicode(bidiAttack)).toBe(true);
+    expect(hasSuspiciousUnicode(bidiAttack)).toBe(true); // must stay true
+    expect(hasSuspiciousUnicode(bidiAttack)).toBe(true); // and again
+    expect(hasSuspiciousUnicode(zwsAttack)).toBe(true);
+    expect(hasSuspiciousUnicode(zwsAttack)).toBe(true);
+    expect(hasSuspiciousUnicode('clean text')).toBe(false);
+    expect(hasSuspiciousUnicode(bidiAttack)).toBe(true); // still true after a false
   });
   
   it('should strip zero-width characters from obfuscated attacks', () => {
