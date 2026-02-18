@@ -1,0 +1,26 @@
+node_modules/
+dist/
+*.tgz
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# Build caches
+.turbo/
+.eslintcache
+
+# macOS
+.DS_Store
+
+# Env files
+.env
+.env.local
+
+# Eval output (generated)
+eval/report.json
+
+# Claude internals
+.claude/
