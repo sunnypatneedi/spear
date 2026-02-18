@@ -53,7 +53,7 @@ let globalRuntime: SAPPSRuntime | null = null;
  * 
  * @example
  * ```typescript
- * import { initializeSAPPS } from '@saymake/sapps/adapters/openai-client';
+ * import { initializeSAPPS } from 'spear/adapters/openai-client';
  * 
  * initializeSAPPS({
  *   policyName: 'balanced',
@@ -113,7 +113,7 @@ export function getRuntime(): SAPPSRuntime {
  * 
  * @example
  * ```typescript
- * import { guardChat } from '@saymake/sapps/adapters/openai-client';
+ * import { guardChat } from 'spear/adapters/openai-client';
  * import { runAssistant } from '@saymake/openai-client';
  * 
  * const result = await guardChat(

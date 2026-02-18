@@ -19,7 +19,7 @@ SAPPS provides comprehensive protection against prompt injection, jailbreaks, an
 ## Quick Start
 
 ```typescript
-import { quick } from '@saymake/sapps';
+import { quick } from 'spear';
 
 const runtime = quick('balanced');
 const preResult = await runtime.pre(messages, { sessionId: 'abc' });

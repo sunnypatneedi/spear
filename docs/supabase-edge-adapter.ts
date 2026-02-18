@@ -98,7 +98,7 @@ export function checkEdgeOutput(
  * 
  * Usage in edge function:
  * ```typescript
- * import { guardEdgeFunction } from 'https://esm.sh/@saymake/sapps@0.1.0/adapters/supabase-edge';
+ * import { guardEdgeFunction } from 'https://esm.sh/spear@0.1.0/adapters/supabase-edge';
  * 
  * serve(guardEdgeFunction(async (req, user) => {
  *   const body = await req.json();

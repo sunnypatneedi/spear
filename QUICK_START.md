@@ -25,10 +25,10 @@ grep -A 5 "HIGH-SIGNAL PROBES" policies/balanced.yaml
 
 ```bash
 # Build SAPPS (if not already built)
-pnpm --filter @saymake/sapps build
+pnpm build
 
 # Run basic tests
-pnpm --filter @saymake/sapps test
+pnpm test
 
 # Expected output:
 # ✓ Unicode Sanitization (5 tests)
@@ -123,7 +123,7 @@ curl -X POST 'http://localhost:54321/functions/v1/summarize-interaction' \
 ```typescript
 // packages/sapps/examples/quick-test.ts
 
-import { quick } from '@saymake/sapps';
+import { quick } from 'spear';
 
 const runtime = quick('balanced', { mode: 'enforce' });
 

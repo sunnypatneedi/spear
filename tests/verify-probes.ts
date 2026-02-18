@@ -5,7 +5,7 @@
  * SAPPS blocks them and doesn't leak system prompts.
  * 
  * Run: node --loader ts-node/esm packages/sapps/tests/verify-probes.ts
- * Or: pnpm --filter @saymake/sapps test:verify-probes
+ * Or: pnpm test:probes
  */
 
 import { inputGate, type Message } from '../src/gates/input_gate';

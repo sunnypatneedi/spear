@@ -103,7 +103,7 @@ Result: ✅ Blocked by InputGate (pattern matches "decode")
 ### Unit Tests (`pnpm test`)
 
 ```bash
-pnpm --filter @saymake/sapps test
+pnpm test
 ```
 
 **Expected Output**:
@@ -134,7 +134,7 @@ Duration: ~200ms
 ### Probe Verification (`pnpm test:probes`)
 
 ```bash
-pnpm --filter @saymake/sapps test:probes
+pnpm test:probes
 ```
 
 **Expected Output**:
@@ -186,7 +186,7 @@ Ready for shadow mode deployment! 🚀
 ### Integration Tests (High-Signal Probes)
 
 ```bash
-pnpm --filter @saymake/sapps test high-signal-probes
+pnpm test high-signal-probes
 ```
 
 **Expected**: All 10 probes blocked, benign queries allowed
@@ -376,13 +376,13 @@ SAPPS provides **defense-in-depth** protection with:
 
 ```bash
 # Build SAPPS
-pnpm --filter @saymake/sapps build
+pnpm build
 
 # Run unit tests
-pnpm --filter @saymake/sapps test
+pnpm test
 
 # Run probe verification
-pnpm --filter @saymake/sapps test:probes
+pnpm test:probes
 
 # Expected: All tests pass, 100% block rate
 ```
@@ -423,17 +423,17 @@ export SAPPS_MODE=enforce
 
 ```bash
 # Quick validation (5 min)
-pnpm --filter @saymake/sapps test
+pnpm test
 
 # Comprehensive verification (10 min)
-pnpm --filter @saymake/sapps test:all
+pnpm test:all
 
 # Probe-specific test (2 min)
-pnpm --filter @saymake/sapps test:probes
+pnpm test:probes
 
 # Full eval with Promptfoo (requires installation)
 npm i -g promptfoo
-pnpm --filter @saymake/sapps eval
+pnpm eval
 ```
 
 ---

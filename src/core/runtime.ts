@@ -474,7 +474,7 @@ export class SAPPSRuntime {
  * 
  * @example
  * ```typescript
- * import { createRuntime, loadPolicy } from '@saymake/sapps';
+ * import { createRuntime, loadPolicy } from 'spear';
  * 
  * const policy = loadPolicy('balanced.yaml');
  * const runtime = createRuntime({ policy, mode: 'shadow' });
