@@ -1,0 +1,16 @@
+{
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node /path/to/spear-hook.mjs",
+            "timeout": 2000
+          }
+        ]
+      }
+    ]
+  }
+}

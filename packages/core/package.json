@@ -1,0 +1,62 @@
+{
+  "name": "@spear/core",
+  "version": "1.0.0",
+  "description": "Secure Prompt Enforcement At Runtime - Defense-in-depth middleware for LLM security",
+  "license": "Apache-2.0",
+  "author": "Sunny Patneedi <sunny@saymake.com>",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/sunnypatneedi/spear.git",
+    "directory": "packages/core"
+  },
+  "homepage": "https://github.com/sunnypatneedi/spear#readme",
+  "bugs": {
+    "url": "https://github.com/sunnypatneedi/spear/issues"
+  },
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc --project tsconfig.json",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:probes": "tsx tests/verify-probes.ts",
+    "test:all": "vitest run && tsx tests/verify-probes.ts",
+    "eval": "node ./eval/scripts/run-guarded.js",
+    "typecheck": "tsc --project tsconfig.json --noEmit",
+    "lint": "eslint 'src/**/*.ts'"
+  },
+  "dependencies": {
+    "yaml": "^2.5.0",
+    "fastest-levenshtein": "^1.0.16",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "tsup": "^8.0.1",
+    "typescript": "^5.5.0",
+    "vitest": "^1.6.0",
+    "@types/node": "^20.12.12",
+    "tsx": "^4.7.0",
+    "eslint": "^9.9.0",
+    "@eslint/js": "^9.9.0",
+    "typescript-eslint": "^8.2.0"
+  },
+  "keywords": [
+    "llm",
+    "security",
+    "prompt-injection",
+    "ai-security",
+    "prompt-security",
+    "jailbreak-detection",
+    "openai",
+    "runtime-protection",
+    "guardrails"
+  ]
+}
+

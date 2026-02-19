@@ -1,0 +1,31 @@
+{
+  "name": "@anthropic-community/spear-hook",
+  "version": "0.1.0",
+  "description": "Ultra-compact prompt injection defense hook for Claude Code",
+  "type": "module",
+  "bin": {
+    "spear-hook": "./spear-hook.mjs"
+  },
+  "files": [
+    "spear-hook.mjs"
+  ],
+  "scripts": {
+    "test": "node test.mjs"
+  },
+  "keywords": [
+    "claude",
+    "claude-code",
+    "prompt-injection",
+    "security",
+    "hook",
+    "llm-security"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/anthropic-community/spear"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

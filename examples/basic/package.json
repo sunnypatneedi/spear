@@ -1,0 +1,17 @@
+{
+  "name": "spear-example-basic",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Basic SPEAR usage example",
+  "scripts": {
+    "start": "tsx index.ts"
+  },
+  "dependencies": {
+    "@spear/core": "workspace:^"
+  },
+  "devDependencies": {
+    "tsx": "^4.7.0",
+    "typescript": "^5.5.0"
+  }
+}

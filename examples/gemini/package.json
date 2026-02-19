@@ -1,0 +1,21 @@
+{
+  "name": "spear-example-gemini",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "SPEAR with Google Gemini example",
+  "scripts": {
+    "start": "tsx index.ts"
+  },
+  "dependencies": {
+    "@spear/core": "workspace:^",
+    "@spear/ai-sdk": "workspace:^",
+    "ai": "^4.0.0",
+    "@ai-sdk/google": "^1.0.0",
+    "dotenv": "^16.4.5"
+  },
+  "devDependencies": {
+    "tsx": "^4.7.0",
+    "typescript": "^5.5.0"
+  }
+}
