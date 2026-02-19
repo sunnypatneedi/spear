@@ -9,7 +9,7 @@ import { google } from '@ai-sdk/google';
 import { openai } from '@ai-sdk/openai';
 import { anthropic } from '@ai-sdk/anthropic';
 import { generateText } from 'ai';
-import { wrapLanguageModel } from '@spear/ai-sdk';
+import { wrapLanguageModel } from '@spear-secure/ai-sdk';
 
 async function main() {
   console.log('🎯 SPEAR Multi-Provider Example\n');

@@ -7,7 +7,7 @@
 import 'dotenv/config';
 import { google } from '@ai-sdk/google';
 import { generateText } from 'ai';
-import { wrapLanguageModel } from '@spear/ai-sdk';
+import { wrapLanguageModel } from '@spear-secure/ai-sdk';
 
 async function main() {
   console.log('🎯 SPEAR + Google Gemini Example\n');

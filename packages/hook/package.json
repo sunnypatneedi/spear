@@ -1,10 +1,13 @@
 {
-  "name": "@anthropic-community/spear-hook",
+  "name": "@spear-secure/hook",
   "version": "0.1.0",
   "description": "Ultra-compact prompt injection defense hook for Claude Code",
   "type": "module",
   "bin": {
     "spear-hook": "./spear-hook.mjs"
+  },
+  "publishConfig": {
+    "access": "public"
   },
   "files": [
     "spear-hook.mjs"

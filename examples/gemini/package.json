@@ -8,8 +8,8 @@
     "start": "tsx index.ts"
   },
   "dependencies": {
-    "@spear/core": "workspace:^",
-    "@spear/ai-sdk": "workspace:^",
+    "@spear-secure/core": "workspace:^",
+    "@spear-secure/ai-sdk": "workspace:^",
     "ai": "^4.0.0",
     "@ai-sdk/google": "^1.0.0",
     "dotenv": "^16.4.5"

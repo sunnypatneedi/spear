@@ -1,4 +1,4 @@
-# @spear/supabase
+# @spear-secure/supabase
 
 SPEAR adapter for Supabase Edge Functions (Deno runtime).
 
@@ -6,14 +6,14 @@ SPEAR adapter for Supabase Edge Functions (Deno runtime).
 
 ```bash
 # In your Supabase project
-import { guardLLMCall } from 'https://esm.sh/@spear/supabase@1.0.0'
+import { guardLLMCall } from 'https://esm.sh/@spear-secure/supabase@1.0.0'
 ```
 
 ## Usage
 
 ```typescript
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
-import { guardLLMCall } from '@spear/supabase'
+import { guardLLMCall } from '@spear-secure/supabase'
 
 serve(async (req) => {
   const { messages } = await req.json()

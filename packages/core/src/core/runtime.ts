@@ -474,7 +474,7 @@ export class SPEARRuntime {
  * 
  * @example
  * ```typescript
- * import { createRuntime, loadPolicy } from '@spear/core';
+ * import { createRuntime, loadPolicy } from '@spear-secure/core';
  * 
  * const policy = loadPolicy('balanced.yaml');
  * const runtime = createRuntime({ policy, mode: 'shadow' });

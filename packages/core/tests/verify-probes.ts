@@ -5,7 +5,7 @@
  * SPEAR blocks them and doesn't leak system prompts.
  * 
  * Run: node --loader ts-node/esm packages/sapps/tests/verify-probes.ts
- * Or: pnpm --filter @spear/core test:verify-probes
+ * Or: pnpm --filter @spear-secure/core test:verify-probes
  */
 
 import { inputGate, type Message } from '../src/gates/input_gate';

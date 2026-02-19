@@ -1,4 +1,4 @@
-# @anthropic-community/spear-hook
+# @spear-secure/hook
 
 Ultra-compact prompt injection defense hook for Claude Code.
 
@@ -153,10 +153,10 @@ node test.mjs
 
 - **Not bulletproof**: Sophisticated attacks may evade pattern matching
 - **PostToolUse only**: Content is in Claude's context before warning is injected
-- **No ML**: Uses regex patterns, not semantic analysis (see `@spear/core` for ML)
+- **No ML**: Uses regex patterns, not semantic analysis (see `@spear-secure/core` for ML)
 - **English-focused**: Some non-English attacks may evade detection
 
-For stronger protection, use the full SPEAR runtime (`@spear/core`) which includes:
+For stronger protection, use the full SPEAR runtime (`@spear-secure/core`) which includes:
 - Cross-lingual ML similarity detection
 - Canary token tracking
 - Tool mediation with capability enforcement

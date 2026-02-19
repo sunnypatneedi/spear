@@ -8,7 +8,7 @@
  * - Tool call mediation
  */
 
-import { quick, type SpearRuntime } from '@spear/core';
+import { quick, type SpearRuntime } from '@spear-secure/core';
 import type { LanguageModel, LanguageModelV1CallOptions, LanguageModelV1FinishReason } from 'ai';
 
 export interface SpearWrapperOptions {
@@ -34,7 +34,7 @@ export interface SpearWrapperOptions {
  * @example
  * ```typescript
  * import { google } from '@ai-sdk/google';
- * import { wrapLanguageModel } from '@spear/ai-sdk';
+ * import { wrapLanguageModel } from '@spear-secure/ai-sdk';
  *
  * const guardedModel = wrapLanguageModel(
  *   google('gemini-1.5-flash'),
@@ -147,7 +147,7 @@ export function wrapLanguageModel(
  *
  * @example
  * ```typescript
- * import { createGuardedModel } from '@spear/ai-sdk';
+ * import { createGuardedModel } from '@spear-secure/ai-sdk';
  * import { google } from '@ai-sdk/google';
  *
  * const model = createGuardedModel(google, 'gemini-1.5-flash', {

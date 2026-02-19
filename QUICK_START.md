@@ -7,7 +7,7 @@
 ## Install
 
 ```bash
-npm install @sunnypatneedi/spear
+npm install @spear-secure/core
 ```
 
 Requires Node.js ≥ 18 (ESM).
@@ -17,7 +17,7 @@ Requires Node.js ≥ 18 (ESM).
 ## 1-Minute Test — attack blocked in 3 lines
 
 ```typescript
-import { quick } from '@sunnypatneedi/spear';
+import { quick } from '@spear-secure/core';
 
 const spear = quick('balanced', { mode: 'enforce' });
 
@@ -56,7 +56,7 @@ Test Files  3 passed (3)
 ## Agent loop — session API
 
 ```typescript
-import { quick } from '@sunnypatneedi/spear';
+import { quick } from '@spear-secure/core';
 
 const spear = quick('balanced', { mode: 'enforce' });
 const session = spear.session({ sessionId: 'agent-001' });

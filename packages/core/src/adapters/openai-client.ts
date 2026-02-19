@@ -53,7 +53,7 @@ let globalRuntime: SPEARRuntime | null = null;
  * 
  * @example
  * ```typescript
- * import { initializeSPEAR } from '@spear/core/adapters/openai-client';
+ * import { initializeSPEAR } from '@spear-secure/core/adapters/openai-client';
  * 
  * initializeSPEAR({
  *   policyName: 'balanced',
@@ -113,7 +113,7 @@ export function getRuntime(): SPEARRuntime {
  * 
  * @example
  * ```typescript
- * import { guardChat } from '@spear/core/adapters/openai-client';
+ * import { guardChat } from '@spear-secure/core/adapters/openai-client';
  * import { runAssistant } from '@saymake/openai-client';
  * 
  * const result = await guardChat(

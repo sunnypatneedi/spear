@@ -3,7 +3,7 @@
 **Defense-in-depth security middleware for LLM I/O pipelines.**
 
 ```bash
-npm install @sunnypatneedi/spear
+npm install @spear-secure/core
 ```
 
 ---
@@ -40,7 +40,7 @@ Spear addresses all three.
 ## Track 1: Library — single-request guard
 
 ```typescript
-import { quick } from '@sunnypatneedi/spear';
+import { quick } from '@spear-secure/core';
 
 const spear = quick('balanced');  // 'balanced' | 'safe' | 'permissive'
 
@@ -82,7 +82,7 @@ Single-request `pre/post` breaks in agent loops. A canary embedded in step 1 mus
 `spear.session()` handles all of this:
 
 ```typescript
-import { quick } from '@sunnypatneedi/spear';
+import { quick } from '@spear-secure/core';
 
 const spear = quick('balanced', { mode: 'enforce' });
 const session = spear.session({ sessionId: 'agent-001', userId: 'u-42' });
@@ -220,7 +220,7 @@ User Input
 Model providers filter conversations. They cannot see inside your tool responses, RAG retrievals, or database results. Spear's **ToolMediator** implements [CaMeL-inspired](https://arxiv.org/abs/2503.18813) data provenance: every value flowing through your agent is tagged with where it came from (`system`, `user`, `assistant`, `tool`, `external`, `untrusted`). A tool argument that originated from an untrusted web scrape cannot trigger a privileged action — regardless of what the LLM decided.
 
 ```typescript
-import { tagValue, ProvenanceSource } from '@sunnypatneedi/spear';
+import { tagValue, ProvenanceSource } from '@spear-secure/core';
 
 // Tag data from external sources as untrusted
 const ragResult = tagValue(fetchedDocument, ProvenanceSource.external('web-search'));
@@ -276,8 +276,8 @@ EU AI Act and SOC 2 auditors want demonstrable, testable controls. A policy file
 ## Installation
 
 ```bash
-npm install @sunnypatneedi/spear    # npm
-pnpm add @sunnypatneedi/spear       # pnpm
+npm install @spear-secure/core    # npm
+pnpm add @spear-secure/core       # pnpm
 ```
 
 Requires **Node.js ≥ 18** (ESM).
@@ -295,7 +295,7 @@ Three profiles ship with the package:
 | `permissive` | Low | Development / testing |
 
 ```typescript
-import { quick, loadPolicy, loadPolicyFromString, createRuntime } from '@sunnypatneedi/spear';
+import { quick, loadPolicy, loadPolicyFromString, createRuntime } from '@spear-secure/core';
 
 // By name
 const spear = quick('safe');
@@ -418,13 +418,13 @@ const { allowed, reason } = await spear.mediateToolCall(
 ### Standalone gates
 
 ```typescript
-import { inputGate, outputGate, instructionShield, toolMediator } from '@sunnypatneedi/spear';
+import { inputGate, outputGate, instructionShield, toolMediator } from '@spear-secure/core';
 ```
 
 ### PII utilities
 
 ```typescript
-import { detectPII, maskPII, tokenizePII, detokenizePII } from '@sunnypatneedi/spear';
+import { detectPII, maskPII, tokenizePII, detokenizePII } from '@spear-secure/core';
 
 const result = tokenizePII('Call John at 555-0100', knownEntities);
 // { text: 'Call [PERSON_1] at [PHONE_1]', tokens: {...} }
@@ -433,7 +433,7 @@ const result = tokenizePII('Call John at 555-0100', knownEntities);
 ### Data provenance
 
 ```typescript
-import { tagValue, ProvenanceSource, checkCapabilities } from '@sunnypatneedi/spear';
+import { tagValue, ProvenanceSource, checkCapabilities } from '@spear-secure/core';
 
 const value = tagValue(externalData, ProvenanceSource.external('rag'));
 // value is now tagged — ToolMediator will enforce capability rules on it

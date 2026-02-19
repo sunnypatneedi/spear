@@ -45,13 +45,13 @@ cp examples/edge-function/index.ts supabase/functions/protected-llm-call/index.t
 supabase functions deploy protected-llm-call
 ```
 
-## Using @spear/supabase
+## Using @spear-secure/supabase
 
 In your edge function, import and use the SPEAR Supabase adapter:
 
 ```typescript
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
-import { guardLLMCall } from 'https://esm.sh/@spear/supabase@1.0.0';
+import { guardLLMCall } from 'https://esm.sh/@spear-secure/supabase@1.0.0';
 
 serve(async (req) => {
   const { messages } = await req.json();

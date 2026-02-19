@@ -103,7 +103,7 @@ Result: ✅ Blocked by InputGate (pattern matches "decode")
 ### Unit Tests (`pnpm test`)
 
 ```bash
-pnpm --filter @spear/core test
+pnpm --filter @spear-secure/core test
 ```
 
 **Expected Output**:
@@ -134,7 +134,7 @@ Duration: ~200ms
 ### Probe Verification (`pnpm test:probes`)
 
 ```bash
-pnpm --filter @spear/core test:probes
+pnpm --filter @spear-secure/core test:probes
 ```
 
 **Expected Output**:
@@ -186,7 +186,7 @@ Ready for shadow mode deployment! 🚀
 ### Integration Tests (High-Signal Probes)
 
 ```bash
-pnpm --filter @spear/core test high-signal-probes
+pnpm --filter @spear-secure/core test high-signal-probes
 ```
 
 **Expected**: All 10 probes blocked, benign queries allowed
@@ -376,13 +376,13 @@ SPEAR provides **defense-in-depth** protection with:
 
 ```bash
 # Build SPEAR
-pnpm --filter @spear/core build
+pnpm --filter @spear-secure/core build
 
 # Run unit tests
-pnpm --filter @spear/core test
+pnpm --filter @spear-secure/core test
 
 # Run probe verification
-pnpm --filter @spear/core test:probes
+pnpm --filter @spear-secure/core test:probes
 
 # Expected: All tests pass, 100% block rate
 ```
@@ -423,17 +423,17 @@ export SPEAR_MODE=enforce
 
 ```bash
 # Quick validation (5 min)
-pnpm --filter @spear/core test
+pnpm --filter @spear-secure/core test
 
 # Comprehensive verification (10 min)
-pnpm --filter @spear/core test:all
+pnpm --filter @spear-secure/core test:all
 
 # Probe-specific test (2 min)
-pnpm --filter @spear/core test:probes
+pnpm --filter @spear-secure/core test:probes
 
 # Full eval with Promptfoo (requires installation)
 npm i -g promptfoo
-pnpm --filter @spear/core eval
+pnpm --filter @spear-secure/core eval
 ```
 
 ---

@@ -1,6 +1,6 @@
 {
-  "name": "@spear/ai-sdk",
-  "version": "1.0.0",
+  "name": "@spear-secure/ai-sdk",
+  "version": "0.1.0",
   "description": "SPEAR integration for Vercel AI SDK - Multi-provider LLM security",
   "license": "Apache-2.0",
   "author": "Sunny Patneedi <sunny@saymake.com>",
@@ -28,8 +28,14 @@
     "typecheck": "tsc --noEmit",
     "lint": "eslint 'src/**/*.ts'"
   },
+  "publishConfig": {
+    "access": "public"
+  },
+  "files": [
+    "dist"
+  ],
   "peerDependencies": {
-    "@spear/core": "^1.0.0",
+    "@spear-secure/core": "^0.1.0",
     "ai": "^4.0.0"
   },
   "peerDependenciesMeta": {
@@ -44,6 +50,7 @@
     }
   },
   "devDependencies": {
+    "@spear-secure/core": "workspace:*",
     "typescript": "^5.5.0",
     "@types/node": "^20.12.12",
     "vitest": "^1.6.0",

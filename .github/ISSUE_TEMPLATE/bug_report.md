@@ -17,7 +17,7 @@ assignees: ''
 ## Reproduction
 
 ```typescript
-import { quick } from '@sunnypatneedi/spear';
+import { quick } from '@spear-secure/core';
 
 const runtime = quick('balanced');
 

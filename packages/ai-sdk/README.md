@@ -1,4 +1,4 @@
-# @spear/ai-sdk
+# @spear-secure/ai-sdk
 
 SPEAR integration for [Vercel AI SDK](https://sdk.vercel.ai) - Multi-provider LLM security.
 
@@ -14,7 +14,7 @@ Protect your LLM applications from prompt injection, jailbreaks, and data leaks 
 ## Installation
 
 ```bash
-npm install @spear/core @spear/ai-sdk ai @ai-sdk/google
+npm install @spear-secure/core @spear-secure/ai-sdk ai @ai-sdk/google
 ```
 
 ## Quick Start
@@ -24,7 +24,7 @@ npm install @spear/core @spear/ai-sdk ai @ai-sdk/google
 ```typescript
 import { google } from '@ai-sdk/google';
 import { generateText } from 'ai';
-import { wrapLanguageModel } from '@spear/ai-sdk';
+import { wrapLanguageModel } from '@spear-secure/ai-sdk';
 
 // Wrap Gemini model with SPEAR protection
 const guardedModel = wrapLanguageModel(
@@ -47,7 +47,7 @@ console.log(result.text); // Will be blocked by SPEAR
 
 ```typescript
 import { openai } from '@ai-sdk/openai';
-import { wrapLanguageModel } from '@spear/ai-sdk';
+import { wrapLanguageModel } from '@spear-secure/ai-sdk';
 
 const guardedModel = wrapLanguageModel(
   openai('gpt-4-turbo'),
@@ -59,7 +59,7 @@ const guardedModel = wrapLanguageModel(
 
 ```typescript
 import { anthropic } from '@ai-sdk/anthropic';
-import { wrapLanguageModel } from '@spear/ai-sdk';
+import { wrapLanguageModel } from '@spear-secure/ai-sdk';
 
 const guardedModel = wrapLanguageModel(
   anthropic('claude-3-5-sonnet-20241022'),
@@ -89,7 +89,7 @@ Wraps a Vercel AI SDK `LanguageModel` with SPEAR protection.
 Convenience function to create a guarded model directly.
 
 ```typescript
-import { createGuardedModel } from '@spear/ai-sdk';
+import { createGuardedModel } from '@spear-secure/ai-sdk';
 import { google } from '@ai-sdk/google';
 
 const model = createGuardedModel(google, 'gemini-1.5-flash', {

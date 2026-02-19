@@ -1,6 +1,6 @@
 {
-  "name": "@spear/supabase",
-  "version": "1.0.0",
+  "name": "@spear-secure/supabase",
+  "version": "0.1.0",
   "description": "SPEAR adapter for Supabase Edge Functions (Deno)",
   "license": "Apache-2.0",
   "author": "Sunny Patneedi <sunny@saymake.com>",
@@ -26,10 +26,17 @@
     "build": "tsc",
     "typecheck": "tsc --noEmit"
   },
+  "publishConfig": {
+    "access": "public"
+  },
+  "files": [
+    "dist"
+  ],
   "peerDependencies": {
-    "@spear/core": "^1.0.0"
+    "@spear-secure/core": "^0.1.0"
   },
   "devDependencies": {
+    "@spear-secure/core": "workspace:*",
     "typescript": "^5.5.0",
     "@types/node": "^20.12.12"
   },

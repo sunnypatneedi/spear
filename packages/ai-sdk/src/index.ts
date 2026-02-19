@@ -1,5 +1,5 @@
 /**
- * @spear/ai-sdk
+ * @spear-secure/ai-sdk
  *
  * SPEAR integration for Vercel AI SDK
  * Provides multi-provider LLM security through a drop-in wrapper

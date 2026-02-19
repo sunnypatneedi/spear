@@ -64,7 +64,7 @@ Response: Request blocked by security policy.
 
 ```typescript
 import { google } from '@ai-sdk/google';
-import { wrapLanguageModel } from '@spear/ai-sdk';
+import { wrapLanguageModel } from '@spear-secure/ai-sdk';
 
 // Wrap the model with SPEAR protection
 const guardedModel = wrapLanguageModel(
