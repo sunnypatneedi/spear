@@ -10,6 +10,14 @@
     ".": {
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
+    },
+    "./unicode": {
+      "types": "./dist/core/unicode.d.ts",
+      "default": "./dist/core/unicode.js"
+    },
+    "./pii": {
+      "types": "./dist/core/pii.d.ts",
+      "default": "./dist/core/pii.js"
     }
   },
   "files": [
