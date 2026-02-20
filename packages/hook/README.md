@@ -163,4 +163,4 @@ For stronger protection, use the full SPEAR runtime (`@spear-secure/core`) which
 
 ## License
 
-MIT
+AGPL-3.0-only

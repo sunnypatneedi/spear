@@ -69,6 +69,6 @@ Tests in `packages/core/tests/` cover the full gate pipeline. The eval harness i
 
 Please don't open public issues for security vulnerabilities. See [SECURITY.md](./SECURITY.md) for the responsible disclosure process.
 
-## License
+## Contributor License Agreement
 
-By contributing, you agree that your contributions will be licensed under the [Apache-2.0 License](./LICENSE).
+By opening a pull request, you agree to the [Contributor License Agreement](./CLA.md). Your contributions will be licensed under [AGPL-3.0-only](./LICENSE).

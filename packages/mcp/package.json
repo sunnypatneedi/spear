@@ -1,8 +1,54 @@
 {
   "name": "@spear-secure/mcp",
-  "version": "0.0.1",
-  "private": true,
-  "description": "MCP server for multi-client Spear security — planned",
-  "license": "Apache-2.0",
-  "type": "module"
+  "version": "0.1.0",
+  "description": "MCP server exposing Spear security gates to Claude Desktop, Cursor, Windsurf, and other MCP clients",
+  "license": "AGPL-3.0-only",
+  "author": "Sunny Patneedi",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/sunnypatneedi/spear.git",
+    "directory": "packages/mcp"
+  },
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "bin": {
+    "spear-mcp": "./dist/index.js"
+  },
+  "scripts": {
+    "build": "tsc --project tsconfig.json",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc --project tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@spear-secure/core": "workspace:*",
+    "@modelcontextprotocol/sdk": "^1.27.0",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "typescript": "^5.5.0",
+    "vitest": "^1.6.0",
+    "@types/node": "^20.12.12"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "files": [
+    "dist",
+    "!dist/**/*.map"
+  ],
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "llm-security",
+    "prompt-injection",
+    "claude-desktop",
+    "cursor",
+    "windsurf",
+    "ai-security"
+  ]
 }

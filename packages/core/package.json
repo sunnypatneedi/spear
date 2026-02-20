@@ -2,7 +2,7 @@
   "name": "@spear-secure/core",
   "version": "0.1.1",
   "description": "Secure Prompt Enforcement At Runtime - Defense-in-depth middleware for LLM security",
-  "license": "Apache-2.0",
+  "license": "AGPL-3.0-only",
   "author": "Sunny Patneedi",
   "repository": {
     "type": "git",

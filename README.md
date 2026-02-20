@@ -16,7 +16,7 @@ https://github.com/user-attachments/assets/65268509-de61-4d4e-9f7a-8439164db09e
 |---------|-------------|--------|
 | [`@spear-secure/core`](./packages/core) | Security middleware for LLM I/O pipelines | Published |
 | [`@spear-secure/hook`](./packages/hook) | Claude Code PostToolUse hook | Published |
-| `@spear-secure/mcp` | MCP server for multi-client security | Planned |
+| [`@spear-secure/mcp`](./packages/mcp) | MCP server for Claude Desktop, Cursor, Windsurf | Published |
 | `@spear-secure/cli` | CLI for policy management | Planned |
 
 ---
@@ -509,4 +509,6 @@ Found a bypass? See [SECURITY.md](./SECURITY.md) for responsible disclosure. We 
 
 ## License
 
-Apache-2.0
+AGPL-3.0-only — see [LICENSE](./LICENSE).
+
+By contributing, you agree to the [Contributor License Agreement](./CLA.md).
