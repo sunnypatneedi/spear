@@ -1,10 +1,12 @@
 # Spear
 
 **Defense-in-depth security middleware for LLM I/O pipelines.**
-
 ```bash
 npm install @spear-secure/core
 ```
+
+https://github.com/user-attachments/assets/65268509-de61-4d4e-9f7a-8439164db09e
+
 
 ---
 
