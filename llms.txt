@@ -1,0 +1,43 @@
+# Spear
+
+> Defense-in-depth security middleware for LLM I/O pipelines.
+
+Spear guards your LLM application against prompt injection, system prompt exfiltration, PII leaks, and jailbreaks. It works as inline middleware — not a separate service.
+
+## Packages
+
+- @spear-secure/core: Main security runtime. npm install @spear-secure/core
+- @spear-secure/hook: Claude Code PostToolUse hook. npm install @spear-secure/hook
+
+## Quick Start
+
+```typescript
+import { quick } from '@spear-secure/core';
+
+const spear = quick('balanced');
+
+// Pre-gate: scan input, embed canary, sanitize
+const pre = await spear.pre(messages, { sessionId });
+if (!pre.allowed) return blocked();
+
+// Your LLM call
+const response = await llm(pre.messages);
+
+// Post-gate: scan output, detect exfiltration, mask PII
+const post = await spear.post({ output: response, canary: pre.canary });
+```
+
+## Key Features
+
+- InputGate: Unicode normalization, 7-class injection detection
+- InstructionShield: Role hierarchy enforcement, system prompt protection
+- OutputGate: Canary exfiltration detection, PII masking, encoded leak scanning
+- ToolMediator: CaMeL-inspired data provenance, capability-based tool RBAC
+- Session API: Stateful multi-step agent loop security (session.step/tools/complete)
+- Shadow mode: Observe before enforce — policy-as-code with YAML
+
+## Links
+
+- Repository: https://github.com/sunnypatneedi/spear
+- npm: https://www.npmjs.com/package/@spear-secure/core
+- CaMeL paper: https://arxiv.org/abs/2503.18813

@@ -252,8 +252,8 @@ async function checkSidecarSimilarity(
       return { score: 0, error: `Sidecar returned ${response.status}` };
     }
     
-    const data = await response.json();
-    return { score: data.score || 0 };
+    const data = await response.json() as Record<string, unknown>;
+    return { score: (data.score as number) || 0 };
   } catch (error) {
     // Timeout or network error - degrade gracefully
     if (error instanceof Error) {

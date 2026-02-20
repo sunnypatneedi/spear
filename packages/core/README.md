@@ -19,7 +19,7 @@ SPEAR provides comprehensive protection against prompt injection, jailbreaks, an
 ## Quick Start
 
 ```typescript
-import { quick } from '@spear/core';
+import { quick } from '@spear-secure/core';
 
 const runtime = quick('balanced');
 const preResult = await runtime.pre(messages, { sessionId: 'abc' });

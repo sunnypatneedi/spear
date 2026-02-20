@@ -1,9 +1,9 @@
 {
-  "name": "@spear/core",
-  "version": "1.0.0",
+  "name": "@spear-secure/core",
+  "version": "0.1.1",
   "description": "Secure Prompt Enforcement At Runtime - Defense-in-depth middleware for LLM security",
   "license": "Apache-2.0",
-  "author": "Sunny Patneedi <sunny@saymake.com>",
+  "author": "Sunny Patneedi",
   "repository": {
     "type": "git",
     "url": "https://github.com/sunnypatneedi/spear.git",
@@ -20,6 +20,14 @@
     ".": {
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
+    },
+    "./unicode": {
+      "types": "./dist/core/unicode.d.ts",
+      "default": "./dist/core/unicode.js"
+    },
+    "./pii": {
+      "types": "./dist/core/pii.d.ts",
+      "default": "./dist/core/pii.js"
     }
   },
   "scripts": {
@@ -47,6 +55,16 @@
     "@eslint/js": "^9.9.0",
     "typescript-eslint": "^8.2.0"
   },
+  "publishConfig": {
+    "access": "public"
+  },
+  "files": [
+    "dist",
+    "policies",
+    "!dist/adapters",
+    "!dist/**/*.map",
+    "!redteam"
+  ],
   "keywords": [
     "llm",
     "security",
@@ -59,4 +77,3 @@
     "guardrails"
   ]
 }
-

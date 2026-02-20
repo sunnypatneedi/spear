@@ -45,10 +45,6 @@ serve(async (req) => {
     // Parse request
     const { messages, policy = 'balanced', mode = 'enforce' } = await req.json();
 
-    // In production, you'd use @spear/supabase here:
-    // import { guardLLMCall } from '@spear/supabase';
-    // const result = await guardLLMCall(messages, { policy, mode });
-
     // For this example, we'll demonstrate the structure
     const result = {
       allowed: true,

@@ -93,12 +93,18 @@ export function sanitize(text: string): string {
 
 /**
  * Check if text contains any suspicious Unicode characters
- * 
+ *
  * @param text Input text
  * @returns True if suspicious characters detected
  */
 export function hasSuspiciousUnicode(text: string): boolean {
   if (!text) return false;
-  return BIDI_CHARS.test(text) || ZERO_WIDTH_CHARS.test(text);
+  // IMPORTANT: Do NOT use BIDI_CHARS or ZERO_WIDTH_CHARS here.
+  // Those module-level regexes carry the /g flag (required for .replace()).
+  // Calling .test() on a /g regex advances lastIndex, so alternating calls
+  // on matching text return true, false, true, false... — a silent bypass.
+  // Use fresh inline literals (no /g) so every call starts from index 0.
+  return /[\u202A-\u202E\u2066-\u2069]/.test(text) ||
+         /[\u200B-\u200D\uFEFF]/.test(text);
 }
 

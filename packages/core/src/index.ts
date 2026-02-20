@@ -13,12 +13,12 @@
  */
 
 // Import for internal use (quick function)
-import { createRuntime as createRuntimeImpl, type SPEARRuntime } from './core/runtime';
-import { loadPolicy as loadPolicyImpl, type Policy } from './core/policy';
-import type { RuntimeOptions } from './core/runtime';
+import { createRuntime as createRuntimeImpl, type SpearRuntime } from './core/runtime.js';
+import { loadPolicy as loadPolicyImpl, type Policy } from './core/policy.js';
+import type { RuntimeOptions } from './core/runtime.js';
 
 // Core runtime
-export { createRuntime, SPEARRuntime } from './core/runtime';
+export { createRuntime, SpearRuntime } from './core/runtime.js';
 export type {
   RuntimeOptions,
   PreContext,
@@ -26,7 +26,16 @@ export type {
   PostInput,
   PostResult,
   TelemetryEvent
-} from './core/runtime';
+} from './core/runtime.js';
+
+// Session API — stateful context for multi-step agent loops
+export { SpearSession } from './core/session.js';
+export type {
+  SessionOptions,
+  StepResult,
+  ToolBatchResult,
+  SessionCompletionResult
+} from './core/session.js';
 
 // Policy management
 export {
@@ -36,8 +45,8 @@ export {
   getDefaultPolicy,
   mergePolicy,
   policySchema
-} from './core/policy';
-export type { Policy } from './core/policy';
+} from './core/policy.js';
+export type { Policy } from './core/policy.js';
 
 // Canary system
 export {
@@ -47,7 +56,7 @@ export {
   embedCanary,
   extractCanaries,
   CanaryManager
-} from './core/canary';
+} from './core/canary.js';
 
 // CaMeL-inspired Data Provenance & Capabilities
 export {
@@ -86,7 +95,7 @@ export {
   capabilitySchema,
   toolCapabilityRequirementSchema,
   provenancePolicySchema
-} from './core/provenance';
+} from './core/provenance.js';
 export type {
   ProvenanceLevel,
   Provenance,
@@ -95,7 +104,7 @@ export type {
   ToolCapabilityRequirement,
   ProvenancePolicy,
   CapabilityCheckResult
-} from './core/provenance';
+} from './core/provenance.js';
 
 // Unicode sanitization
 export {
@@ -104,7 +113,7 @@ export {
   stripZeroWidth,
   sanitize,
   hasSuspiciousUnicode
-} from './core/unicode';
+} from './core/unicode.js';
 
 // PII detection and tokenization
 export {
@@ -120,7 +129,7 @@ export {
   zipToRegion,
   serializeTokens,
   deserializeTokens
-} from './core/pii';
+} from './core/pii.js';
 export type {
   PIIType,
   PIIMatch,
@@ -129,14 +138,14 @@ export type {
   TokenType,
   KnownEntities,
   TokenizationResult
-} from './core/pii';
+} from './core/pii.js';
 
 // Gates (can be used standalone)
-export { inputGate, inputGateBatch, checkUserMessage } from './gates/input_gate';
-export type { Message, InputGateResult } from './gates/input_gate';
+export { inputGate, inputGateBatch, checkUserMessage } from './gates/input_gate.js';
+export type { Message, InputGateResult } from './gates/input_gate.js';
 
-export { instructionShield, canAppendMessage, getEffectivePrivilege } from './gates/instruction_shield';
-export type { ShieldResult } from './gates/instruction_shield';
+export { instructionShield, canAppendMessage, getEffectivePrivilege } from './gates/instruction_shield.js';
+export type { ShieldResult } from './gates/instruction_shield.js';
 
 export {
   toolMediator,
@@ -149,39 +158,39 @@ export {
   recordToolOutput,
   ToolSchemaRegistry,
   globalSchemaRegistry
-} from './gates/tool_mediator';
+} from './gates/tool_mediator.js';
 export type {
   ToolCall,
   MediationContext,
   ToolMediatorResult,
   TaggedArgument,
   CapabilityViolation
-} from './gates/tool_mediator';
+} from './gates/tool_mediator.js';
 
 export {
   outputGate,
   outputGateBatch,
   checkOutput,
   sanitizeOutput
-} from './gates/output_gate';
-export type { OutputGateInput, OutputGateResult, SidecarOptions } from './gates/output_gate';
+} from './gates/output_gate.js';
+export type { OutputGateInput, OutputGateResult, SidecarOptions } from './gates/output_gate.js';
 
 /**
  * Package version
  */
-export const VERSION = '0.1.0';
+export const VERSION = '0.1.1';
 
 /**
  * Quick start helper: Create runtime from policy name
- * 
+ *
  * @param policyName Policy file name (balanced, safe, permissive)
  * @param options Optional runtime options
  * @returns SPEAR runtime instance
- * 
+ *
  * @example
  * ```typescript
- * import { quick } from '@spear/core';
- * 
+ * import { quick } from '@spear-secure/core';
+ *
  * const runtime = quick('balanced', {
  *   mode: 'shadow',
  *   sidecarUrl: process.env.SPEAR_SIDECAR_URL
@@ -197,8 +206,7 @@ export function quick(
     enableLogging: boolean;
     policy: Policy;
   }> = {}
-): SPEARRuntime {
+): SpearRuntime {
   const policy = options.policy || loadPolicyImpl(`${policyName}.yaml`);
   return createRuntimeImpl({ ...options, policy } as RuntimeOptions);
 }
-

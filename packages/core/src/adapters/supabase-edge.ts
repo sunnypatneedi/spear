@@ -98,7 +98,7 @@ export function checkEdgeOutput(
  * 
  * Usage in edge function:
  * ```typescript
- * import { guardEdgeFunction } from 'https://esm.sh/@spear/core@0.1.0/adapters/supabase-edge';
+ * import { guardEdgeFunction } from 'https://esm.sh/@spear-secure/core@0.1.0/adapters/supabase-edge';
  * 
  * serve(guardEdgeFunction(async (req, user) => {
  *   const body = await req.json();
@@ -120,8 +120,8 @@ export function guardEdgeFunction<T>(
     
     try {
       // Parse request body for input checking
-      const body = await req.json();
-      const content = body.message || body.content || body.prompt || '';
+      const body = await req.json() as Record<string, unknown>;
+      const content = (body.message || body.content || body.prompt || '') as string;
       
       // Check input
       if (content) {

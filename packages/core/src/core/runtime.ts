@@ -24,7 +24,7 @@ import {
 } from '../gates/tool_mediator.js';
 import { CanaryManager } from './canary.js';
 import type { Provenance, ProvenanceLevel, ProvenancePolicy } from './provenance.js';
-import { createProvenance, deriveProvenance, serializeProvenance } from './provenance.js';
+import { SpearSession, type SessionOptions } from './session.js';
 
 /**
  * Runtime configuration options
@@ -102,7 +102,7 @@ export interface TelemetryEvent {
 /**
  * SPEAR Runtime class
  */
-export class SPEARRuntime {
+export class SpearRuntime {
   private policy: Policy;
   private mode: 'shadow' | 'enforce';
   private sidecarOptions: SidecarOptions;
@@ -110,7 +110,7 @@ export class SPEARRuntime {
   private enableLogging: boolean;
   private telemetry: TelemetryEvent[] = [];
   private toolContexts: Map<string, MediationContext> = new Map();
-  
+
   constructor(options: RuntimeOptions) {
     this.policy = options.policy;
     this.mode = options.mode || options.policy.mode;
@@ -122,42 +122,42 @@ export class SPEARRuntime {
     this.canaryManager = new CanaryManager(options.policy.canary.token_len);
     this.enableLogging = options.enableLogging !== false;
   }
-  
+
   /**
    * Log telemetry event
    */
   private log(event: Omit<TelemetryEvent, 'timestamp'>): void {
     if (!this.enableLogging) return;
-    
+
     const fullEvent: TelemetryEvent = {
       ...event,
       timestamp: new Date().toISOString()
     };
-    
+
     this.telemetry.push(fullEvent);
-    
+
     // Keep only last 1000 events
     if (this.telemetry.length > 1000) {
       this.telemetry = this.telemetry.slice(-1000);
     }
   }
-  
+
   /**
    * Pre-process messages before LLM call
-   * 
+   *
    * Runs InputGate and InstructionShield, generates canary if enabled.
-   * 
+   *
    * @param messages Messages to process
    * @param context Processing context
    * @returns Pre-processing result
    */
   async pre(messages: Message[], context: PreContext = {}): Promise<PreResult> {
     const startTime = Date.now();
-    
+
     try {
       // Step 1: Input gate (Unicode sanitization + pattern matching)
       const inputResult: InputGateResult = await inputGate(messages, this.policy);
-      
+
       if (!inputResult.allowed) {
         this.log({
           type: 'block',
@@ -167,7 +167,7 @@ export class SPEARRuntime {
           sessionId: context.sessionId,
           userId: context.userId
         });
-        
+
         // In enforce mode, block immediately
         if (this.mode === 'enforce') {
           return {
@@ -179,10 +179,10 @@ export class SPEARRuntime {
         }
         // Shadow mode: log but allow
       }
-      
+
       // Step 2: Instruction shield (role hierarchy enforcement)
       const shieldResult: ShieldResult = await instructionShield(inputResult.messages, this.policy);
-      
+
       if (!shieldResult.allowed) {
         this.log({
           type: 'block',
@@ -191,7 +191,7 @@ export class SPEARRuntime {
           sessionId: context.sessionId,
           userId: context.userId
         });
-        
+
         if (this.mode === 'enforce') {
           return {
             allowed: false,
@@ -201,13 +201,13 @@ export class SPEARRuntime {
           };
         }
       }
-      
+
       // Step 3: Generate canary if enabled and session exists
       let canary: string | undefined;
       if (this.policy.canary.enabled && context.sessionId) {
         canary = this.canaryManager.generateForSession(context.sessionId);
       }
-      
+
       // Log successful pre-processing
       this.log({
         type: 'input',
@@ -216,14 +216,14 @@ export class SPEARRuntime {
         sessionId: context.sessionId,
         userId: context.userId
       });
-      
+
       return {
         allowed: true,
         messages: shieldResult.messages,
         canary,
         riskScore: inputResult.score
       };
-      
+
     } catch (error) {
       this.log({
         type: 'block',
@@ -232,7 +232,7 @@ export class SPEARRuntime {
         sessionId: context.sessionId,
         userId: context.userId
       });
-      
+
       // Fail-open: allow but log error
       return {
         allowed: true,
@@ -241,12 +241,12 @@ export class SPEARRuntime {
       };
     }
   }
-  
+
   /**
    * Post-process LLM output before returning
-   * 
+   *
    * Runs OutputGate with canary detection, n-gram filtering, PII masking, and similarity checks.
-   * 
+   *
    * @param input Output to process
    * @param context Processing context
    * @returns Post-processing result
@@ -264,20 +264,20 @@ export class SPEARRuntime {
       if (input.canary) {
         canaries.push(input.canary);
       }
-      
+
       // Run output gate
       const gateInput: OutputGateInput = {
         output: input.output,
         canaries,
         systemPrompt: input.systemPrompt
       };
-      
+
       const result: OutputGateResult = await outputGate(
         gateInput,
         this.policy,
         this.sidecarOptions
       );
-      
+
       // Log result
       this.log({
         type: result.allowed ? 'output' : 'block',
@@ -287,14 +287,14 @@ export class SPEARRuntime {
         sessionId: context.sessionId,
         userId: context.userId
       });
-      
+
       return {
         allowed: result.allowed,
         reason: result.reason,
         output: result.output,
         riskScore: result.score
       };
-      
+
     } catch (error) {
       this.log({
         type: 'block',
@@ -303,7 +303,7 @@ export class SPEARRuntime {
         sessionId: context.sessionId,
         userId: context.userId
       });
-      
+
       // Fail-open: allow but log error
       return {
         allowed: true,
@@ -312,7 +312,7 @@ export class SPEARRuntime {
       };
     }
   }
-  
+
   /**
    * Mediate a tool call with CaMeL capability enforcement
    *
@@ -391,28 +391,28 @@ export class SPEARRuntime {
       this.toolContexts.set(contextKey, updated);
     }
   }
-  
+
   /**
    * Get telemetry events
    */
   getTelemetry(): TelemetryEvent[] {
     return [...this.telemetry];
   }
-  
+
   /**
    * Clear telemetry
    */
   clearTelemetry(): void {
     this.telemetry = [];
   }
-  
+
   /**
    * Get policy configuration
    */
   getPolicy(): Policy {
     return this.policy;
   }
-  
+
   /**
    * Update policy (creates new runtime instance internally)
    */
@@ -464,27 +464,63 @@ export class SPEARRuntime {
     const context = this.toolContexts.get(contextKey);
     return context?.outputProvenance || [];
   }
+
+  /**
+   * Create a session-scoped security context for multi-step agent loops
+   *
+   * The session wraps pre/post/tools into a stateful object that:
+   * - Threads a single canary across ALL steps in the loop
+   * - Accumulates peak risk score across the full session
+   * - Provides batch parallel tool checking for concurrent tool_calls
+   *
+   * @param options Session configuration (sessionId required)
+   * @returns SpearSession instance for this agent loop
+   *
+   * @example
+   * ```typescript
+   * const session = spear.session({ sessionId: 'agent-001' });
+   *
+   * // ReAct loop
+   * while (true) {
+   *   const step = await session.step(messages);
+   *   if (!step.allowed) break;
+   *
+   *   const llmResponse = await llm(step.messages);
+   *   if (!llmResponse.tool_calls?.length) {
+   *     const final = await session.complete(llmResponse.content);
+   *     return final.output;
+   *   }
+   *
+   *   const { allowed } = await session.tools(llmResponse.tool_calls);
+   *   session.observe(await executeAll(allowed), { source: 'external' });
+   *   messages = buildFollowUp(llmResponse, results);
+   * }
+   * ```
+   */
+  session(options: SessionOptions): SpearSession {
+    return new SpearSession(this, options);
+  }
 }
 
 /**
  * Create a SPEAR runtime instance
- * 
+ *
  * @param options Runtime configuration
  * @returns SPEAR runtime instance
- * 
+ *
  * @example
  * ```typescript
- * import { createRuntime, loadPolicy } from '@spear/core';
- * 
+ * import { createRuntime, loadPolicy } from '@spear-secure/core';
+ *
  * const policy = loadPolicy('balanced.yaml');
  * const runtime = createRuntime({ policy, mode: 'shadow' });
- * 
+ *
  * // Pre-process
  * const preResult = await runtime.pre(messages, { sessionId: 'abc123' });
- * 
+ *
  * // Call LLM
  * const llmOutput = await callLLM(preResult.messages);
- * 
+ *
  * // Post-process
  * const postResult = await runtime.post({
  *   output: llmOutput,
@@ -492,7 +528,6 @@ export class SPEARRuntime {
  * });
  * ```
  */
-export function createRuntime(options: RuntimeOptions): SPEARRuntime {
-  return new SPEARRuntime(options);
+export function createRuntime(options: RuntimeOptions): SpearRuntime {
+  return new SpearRuntime(options);
 }
-

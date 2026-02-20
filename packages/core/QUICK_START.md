@@ -25,10 +25,10 @@ grep -A 5 "HIGH-SIGNAL PROBES" policies/balanced.yaml
 
 ```bash
 # Build SPEAR (if not already built)
-pnpm --filter @spear/core build
+pnpm --filter @spear-secure/core build
 
 # Run basic tests
-pnpm --filter @spear/core test
+pnpm --filter @spear-secure/core test
 
 # Expected output:
 # ✓ Unicode Sanitization (5 tests)
@@ -123,7 +123,7 @@ curl -X POST 'http://localhost:54321/functions/v1/summarize-interaction' \
 ```typescript
 // packages/sapps/examples/quick-test.ts
 
-import { quick } from '@spear/core';
+import { quick } from '@spear-secure/core';
 
 const runtime = quick('balanced', { mode: 'enforce' });
 

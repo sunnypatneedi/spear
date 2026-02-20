@@ -4,7 +4,7 @@
  * Demonstrates core SPEAR API without requiring an LLM
  */
 
-import { quick } from '@spear/core';
+import { quick } from '@spear-secure/core';
 
 async function main() {
   console.log('🎯 SPEAR Basic Example\n');
