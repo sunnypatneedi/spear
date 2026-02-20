@@ -45,32 +45,34 @@ cp examples/edge-function/index.ts supabase/functions/protected-llm-call/index.t
 supabase functions deploy protected-llm-call
 ```
 
-## Using @spear-secure/supabase
+## Using @spear-secure/core
 
-In your edge function, import and use the SPEAR Supabase adapter:
+In your edge function, import and use the SPEAR core library:
 
 ```typescript
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
-import { guardLLMCall } from 'https://esm.sh/@spear-secure/supabase@1.0.0';
+import { quick } from 'https://esm.sh/@spear-secure/core';
+
+const spear = quick('balanced', { mode: 'enforce' });
 
 serve(async (req) => {
   const { messages } = await req.json();
 
-  // SPEAR guards the LLM call
-  const result = await guardLLMCall(messages, {
-    policy: 'balanced',
-    mode: 'enforce'
-  });
+  // SPEAR guards the input
+  const pre = await spear.pre(messages);
 
-  if (!result.allowed) {
+  if (!pre.allowed) {
     return new Response(
-      JSON.stringify({ error: result.reason }),
+      JSON.stringify({ error: pre.reason }),
       { status: 400 }
     );
   }
 
-  // Call your LLM here with result.messages
-  // ...
+  // Call your LLM here with pre.messages
+  // const llmResponse = await callLLM(pre.messages);
+
+  // SPEAR guards the output
+  // const post = await spear.post({ output: llmResponse, canary: pre.canary });
 
   return new Response(JSON.stringify({ success: true }));
 });

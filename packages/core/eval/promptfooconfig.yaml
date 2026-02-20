@@ -14,18 +14,18 @@ providers:
 # Test corpora (core, obfuscated, multilingual)
 prompts:
   # Core 10 high-signal probes (English)
-  - file:///../redteam/attacks.core.txt
-  
+  - file://../redteam/attacks.core.txt
+
   # Unicode obfuscation attacks (zero-width, homoglyphs, Bidi, etc.)
-  - file:///../redteam/attacks.obfuscated.txt
-  
+  - file://../redteam/attacks.obfuscated.txt
+
   # Multilingual variants
-  - file:///../redteam/languages/es.txt
-  - file:///../redteam/languages/da.txt
-  - file:///../redteam/languages/hi.txt
-  
+  - file://../redteam/languages/es.txt
+  - file://../redteam/languages/da.txt
+  - file://../redteam/languages/hi.txt
+
   # Legacy comprehensive corpus (preserved)
-  - file:///../redteam/attacks.txt
+  - file://../redteam/attacks.txt
 
 # Default test assertions (applied to all prompts unless overridden)
 defaultTest:

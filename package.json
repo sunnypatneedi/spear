@@ -1,82 +1,22 @@
 {
-  "name": "@sunnypatneedi/spear",
+  "name": "spear-monorepo",
   "private": true,
-  "version": "0.1.0",
-  "description": "Defense-in-depth security middleware for LLM I/O pipelines — blocks prompt injection, PII leaks, and jailbreaks",
+  "description": "Spear monorepo workspace root",
   "license": "Apache-2.0",
   "type": "module",
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
-  "exports": {
-    ".": {
-      "types": "./dist/index.d.ts",
-      "default": "./dist/index.js"
-    },
-    "./unicode": {
-      "types": "./dist/core/unicode.d.ts",
-      "default": "./dist/core/unicode.js"
-    },
-    "./pii": {
-      "types": "./dist/core/pii.d.ts",
-      "default": "./dist/core/pii.js"
-    }
-  },
-  "files": [
-    "dist",
-    "policies",
-    "redteam",
-    "eval",
-    "README.md",
-    "QUICK_START.md",
-    "PROBE_VERIFICATION_REPORT.md"
-  ],
-  "publishConfig": {
-    "access": "public"
-  },
   "repository": {
     "type": "git",
     "url": "https://github.com/sunnypatneedi/spear"
   },
-  "homepage": "https://github.com/sunnypatneedi/spear#readme",
-  "bugs": {
-    "url": "https://github.com/sunnypatneedi/spear/issues"
-  },
   "scripts": {
-    "build": "pnpm exec tsc --project tsconfig.json",
-    "prepublishOnly": "pnpm build && pnpm test",
-    "test": "vitest run",
-    "test:watch": "vitest",
-    "test:probes": "tsx tests/verify-probes.ts",
-    "test:all": "vitest run && tsx tests/verify-probes.ts",
-    "eval": "node ./eval/scripts/run-guarded.js",
-    "typecheck": "pnpm exec tsc --project tsconfig.json --noEmit",
-    "lint": "eslint 'src/**/*.ts'"
-  },
-  "dependencies": {
-    "yaml": "^2.5.0",
-    "fastest-levenshtein": "^1.0.16",
-    "zod": "^3.23.8"
+    "build": "pnpm -r build",
+    "test": "pnpm -r test",
+    "typecheck": "pnpm -r typecheck",
+    "lint": "pnpm -r lint",
+    "eval": "pnpm --filter @spear-secure/core eval",
+    "clean": "pnpm -r exec rm -rf dist"
   },
   "devDependencies": {
-    "tsup": "^8.0.1",
-    "typescript": "^5.5.0",
-    "vitest": "^1.6.0",
-    "@types/node": "^20.12.12",
-    "tsx": "^4.7.0",
-    "eslint": "^9.9.0",
-    "@eslint/js": "^9.9.0",
-    "typescript-eslint": "^8.2.0"
-  },
-  "keywords": [
-    "security",
-    "llm",
-    "prompt-injection",
-    "jailbreak",
-    "guardrails",
-    "ai-safety",
-    "pii",
-    "middleware",
-    "camel",
-    "provenance"
-  ]
+    "typescript": "^5.5.0"
+  }
 }

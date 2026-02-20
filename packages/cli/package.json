@@ -1,0 +1,8 @@
+{
+  "name": "@spear-secure/cli",
+  "version": "0.0.1",
+  "private": true,
+  "description": "CLI for Spear policy management and eval — planned",
+  "license": "Apache-2.0",
+  "type": "module"
+}

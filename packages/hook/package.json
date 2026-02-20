@@ -1,6 +1,6 @@
 {
   "name": "@spear-secure/hook",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Ultra-compact prompt injection defense hook for Claude Code",
   "type": "module",
   "bin": {

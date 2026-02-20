@@ -8,6 +8,17 @@ npm install @spear-secure/core
 
 ---
 
+## Packages
+
+| Package | Description | Status |
+|---------|-------------|--------|
+| [`@spear-secure/core`](./packages/core) | Security middleware for LLM I/O pipelines | Published |
+| [`@spear-secure/hook`](./packages/hook) | Claude Code PostToolUse hook | Published |
+| `@spear-secure/mcp` | MCP server for multi-client security | Planned |
+| `@spear-secure/cli` | CLI for policy management | Planned |
+
+---
+
 ## The problem with LLM security today
 
 Most teams ship LLM features and assume their model provider's safety filters are enough. They're not — and the gap is invisible until something goes wrong.
