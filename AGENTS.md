@@ -29,7 +29,7 @@ spear/
 │   │   ├── eval/               # Promptfoo config
 │   │   └── tests/              # Vitest tests
 │   ├── hook/                   # @spear-secure/hook (published)
-│   ├── mcp/                    # Planned stub
+│   ├── mcp/                    # @spear-secure/mcp (published)
 │   └── cli/                    # Planned stub
 ├── services/sidecar/           # Python ML similarity service
 ├── examples/

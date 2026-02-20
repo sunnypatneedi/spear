@@ -453,6 +453,4 @@ pnpm --filter @spear-secure/core eval
 
 ---
 
-**GitHub Issue**: [#21](https://github.com/sunnypatneedi/saymake-landing/issues/21)  
-**Full Plan**: `docs/SPEAR_PLAN.md`  
-**Integration Guide**: `docs/SPEAR_SYSTEM_INTEGRATION_VALIDATION.md`
+**GitHub Issue**: [#21](https://github.com/sunnypatneedi/spear/issues/21)

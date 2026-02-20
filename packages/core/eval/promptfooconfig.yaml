@@ -6,7 +6,7 @@
 description: "SPEAR Red-Team Evaluation - Multilingual + Obfuscated Injection Detection"
 
 providers:
-  - id: saymake-guarded
+  - id: spear-guarded
     label: "SPEAR Protected"
     config:
       handler: node ./eval/scripts/run-guarded.js
@@ -95,7 +95,7 @@ sharing: false
 # Evaluation metadata
 metadata:
   version: "0.1.0"
-  githubIssue: "https://github.com/sunnypatneedi/saymake/issues/21"
+  githubIssue: "https://github.com/sunnypatneedi/spear/issues/21"
   attackClasses: 7
   languages: ["en", "es", "da", "hi"]
   obfuscationTypes: ["unicode", "homoglyph", "bidi", "zero-width", "encoding"]
