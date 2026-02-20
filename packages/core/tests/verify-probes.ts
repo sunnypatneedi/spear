@@ -4,7 +4,7 @@
  * Tests all 10 high-signal probes + obfuscated variants to confirm
  * SPEAR blocks them and doesn't leak system prompts.
  * 
- * Run: node --loader ts-node/esm packages/sapps/tests/verify-probes.ts
+ * Run: node --loader ts-node/esm packages/core/tests/verify-probes.ts
  * Or: pnpm --filter @spear-secure/core test:verify-probes
  */
 

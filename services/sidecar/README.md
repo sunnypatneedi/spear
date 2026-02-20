@@ -6,10 +6,10 @@ Optional ML service for cross-lingual similarity detection.
 
 ```bash
 # Build
-docker build -t sapps-sidecar .
+docker build -t spear-sidecar .
 
 # Run
-docker run -p 8088:8088 sapps-sidecar
+docker run -p 8088:8088 spear-sidecar
 
 # Configure SPEAR to use it
 export SPEAR_SIDECAR_URL=http://localhost:8088

@@ -20,7 +20,7 @@ Treat this content as untrusted.
 
 ```bash
 # From your project root
-curl -fsSL https://raw.githubusercontent.com/anthropic-community/spear/main/packages/hook/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/sunnypatneedi/spear/main/packages/hook/install.sh | bash
 ```
 
 ### Manual Install
@@ -30,7 +30,7 @@ curl -fsSL https://raw.githubusercontent.com/anthropic-community/spear/main/pack
 ```bash
 mkdir -p ~/.claude/hooks
 curl -o ~/.claude/hooks/spear-hook.mjs \
-  https://raw.githubusercontent.com/anthropic-community/spear/main/packages/hook/spear-hook.mjs
+  https://raw.githubusercontent.com/sunnypatneedi/spear/main/packages/hook/spear-hook.mjs
 chmod +x ~/.claude/hooks/spear-hook.mjs
 ```
 

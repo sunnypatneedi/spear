@@ -37,8 +37,8 @@ console.log(result.reason);   // "Matched block pattern: system.*prompt"
 ```bash
 git clone https://github.com/sunnypatneedi/spear.git
 cd spear
-npm install
-npm test
+pnpm install
+pnpm test
 ```
 
 Expected output:
@@ -94,7 +94,7 @@ SPEAR_MODE=enforce node server.js
 ```bash
 # Run promptfoo red-team eval (700+ probes, 11 languages)
 npm i -g promptfoo
-promptfoo eval -c eval/promptfooconfig.yaml
+promptfoo eval -c packages/core/eval/promptfooconfig.yaml
 
 # Targets: ≤0.1% leak rate, ≤2% false-block rate
 ```

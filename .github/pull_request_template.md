@@ -12,9 +12,9 @@
 
 ## Testing
 
-- [ ] `npm test` passes
-- [ ] `npm run typecheck` passes
-- [ ] `npm run lint` passes
+- [ ] `pnpm test` passes
+- [ ] `pnpm typecheck` passes
+- [ ] `pnpm lint` passes
 - [ ] New behavior is covered by a test
 
 ## For gate changes — before/after

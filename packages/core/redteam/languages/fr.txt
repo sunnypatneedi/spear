@@ -1,4 +1,4 @@
-# SAPPS Cross-Lingual Attack Corpus - French
+# Spear Cross-Lingual Attack Corpus - French
 # Attaques par injection en français
 # Last Updated: 2025-12-25
 

@@ -352,7 +352,7 @@ Spear ships with a [promptfoo](https://promptfoo.dev) red-team eval covering 700
 
 ```bash
 npm i -g promptfoo
-promptfoo eval -c eval/promptfooconfig.yaml
+promptfoo eval -c packages/core/eval/promptfooconfig.yaml
 ```
 
 Run this in CI. Thresholds: ≤ 0.1% leak rate, ≤ 2% false-block rate. See [PROBE_VERIFICATION_REPORT.md](./PROBE_VERIFICATION_REPORT.md) for baseline results.
@@ -457,7 +457,7 @@ const value = tagValue(externalData, ProvenanceSource.external('rag'));
 The sidecar adds ML-based semantic similarity detection — catching paraphrased prompt extraction that pattern matching misses.
 
 ```bash
-cd sidecar
+cd services/sidecar
 docker build -t spear-sidecar .
 docker run -p 8088:8088 \
   -e SYSTEM_PROMPT="$(cat my_system_prompt.txt)" \

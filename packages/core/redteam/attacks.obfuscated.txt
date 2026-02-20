@@ -1,4 +1,4 @@
-# SAPPS Obfuscated Attack Corpus
+# Spear Obfuscated Attack Corpus
 # Unicode, homoglyph, zero-width, Bidi, and encoding attacks
 # Tests Unicode sanitization (normalize, stripBidi, stripZeroWidth)
 # Last Updated: 2025-10-21

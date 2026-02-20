@@ -1,4 +1,4 @@
-# SAPPS Red-Team Attack Corpus
+# Spear Red-Team Attack Corpus
 # High-signal injection probes covering all attack vectors
 # Source: Security research + GitHub Issue #21
 # Last Updated: 2025-10-21

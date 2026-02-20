@@ -8,7 +8,7 @@
 
 ```bash
 # From repo root
-cd packages/sapps
+cd packages/core
 
 # Test that probes are blocked
 head -20 redteam/attacks.core.txt
@@ -121,8 +121,6 @@ curl -X POST 'http://localhost:54321/functions/v1/summarize-interaction' \
 ## See Results Immediately
 
 ```typescript
-// packages/sapps/examples/quick-test.ts
-
 import { quick } from '@spear-secure/core';
 
 const runtime = quick('balanced', { mode: 'enforce' });
@@ -163,9 +161,7 @@ console.log('Benign allowed:', benignResult.allowed); // true ✅
 
 ## Full Documentation
 
-- **Implementation**: `docs/SPEAR_PLAN.md` (513 lines)
-- **Integration**: `docs/SPEAR_SYSTEM_INTEGRATION_VALIDATION.md`
-- **Deployment**: `docs/SPEAR_DEPLOYMENT_GUIDE.md`
+- **Monorepo README**: See `../../README.md` for full API reference
 - **Verification**: `PROBE_VERIFICATION_REPORT.md`
 
 ---

@@ -1,8 +1,7 @@
-# SAPPS Probe Verification Report
+# Spear Probe Verification Report
 
-**Date**: October 21, 2025  
-**Version**: 0.1.0  
-**GitHub Issue**: [#21](https://github.com/sunnypatneedi/saymake-landing/issues/21)
+**Date**: October 21, 2025
+**Version**: 0.1.0
 
 ---
 
@@ -139,7 +138,7 @@ pnpm test:probes
 
 **Expected Output**:
 ```
-🛡️  SAPPS Probe Verification
+🛡️  Spear Probe Verification
 ================================================================================
 
 Testing against: You are a helpful educational assistant...
@@ -179,7 +178,7 @@ Blocks by Gate:
   OutputGate: 2
   None (leak): 0
 
-✅ SUCCESS - SAPPS blocks ≥95% of attacks
+✅ SUCCESS - Spear blocks ≥95% of attacks
 Ready for shadow mode deployment! 🚀
 ```
 
@@ -361,7 +360,7 @@ Final output: "I can't share internal instructions or system prompts."
 
 **System prompts will NOT leak** through any of the 10 high-signal probes or their obfuscated/multilingual variants.
 
-SAPPS provides **defense-in-depth** protection with:
+Spear provides **defense-in-depth** protection with:
 1. InputGate: Blocks 100% of tested attacks
 2. OutputGate: Redundant protection (catches leaks if InputGate fails)
 3. Canary: Ultimate failsafe (instant block on token detection)
@@ -375,7 +374,7 @@ SAPPS provides **defense-in-depth** protection with:
 ### 1. Run Verification Locally
 
 ```bash
-# Build SAPPS
+# Build Spear
 pnpm build
 
 # Run unit tests
@@ -399,7 +398,7 @@ supabase functions deploy homework-analyze-stream
 supabase functions deploy extract-conversation-memories
 
 # Monitor
-supabase functions logs --all | grep SAPPS
+supabase functions logs --all | grep SPEAR
 ```
 
 ### 3. Collect Real-World Metrics
@@ -454,6 +453,4 @@ pnpm eval
 
 ---
 
-**GitHub Issue**: [#21](https://github.com/sunnypatneedi/saymake-landing/issues/21)  
-**Full Plan**: `docs/SAPPS_PLAN.md`  
-**Integration Guide**: `docs/SAPPS_SYSTEM_INTEGRATION_VALIDATION.md`
+**Repository**: [github.com/sunnypatneedi/spear](https://github.com/sunnypatneedi/spear)

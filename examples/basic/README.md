@@ -46,5 +46,5 @@ Example 4: Telemetry data
 
 ## Next Steps
 
-- See [../gemini](../gemini) for Vercel AI SDK integration
-- See [../multi-provider](../multi-provider) for multi-provider support
+- See [../edge-function](../edge-function) for Supabase Edge Function deployment
+- See the full [README](../../README.md) for Session API and provenance tracking

@@ -1,8 +1,7 @@
-# SPEAR Probe Verification Report
+# Spear Probe Verification Report
 
-**Date**: October 21, 2025  
-**Version**: 0.1.0  
-**GitHub Issue**: [#21](https://github.com/sunnypatneedi/saymake-landing/issues/21)
+**Date**: October 21, 2025
+**Version**: 0.1.0
 
 ---
 

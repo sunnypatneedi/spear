@@ -1,4 +1,4 @@
-# SAPPS Core Attack Corpus
+# Spear Core Attack Corpus
 # 10 high-signal production-grade injection probes
 # Source: Security research + GitHub Issue #21
 # Last Updated: 2025-10-21
