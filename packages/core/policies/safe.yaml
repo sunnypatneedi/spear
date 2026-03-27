@@ -16,15 +16,46 @@ canary:
 input_rules:
   strip_bidi: true
   regex_block:
-    # All patterns from balanced.yaml plus more aggressive variants
-    - '(?i)\b(system|inner|base|seed|meta|developer|hidden|secret)[ -]?prompt\b'
-    - '(?i)(ignore|disregard|forget|override) (previous|all|earlier) (instructions|commands|rules)'
-    - '(?i)(get in touch with|channel|consult|access|retrieve).*\b(inner|seed|base|meta)[ -]?prompt\b'
-    - '(?i)(two|double|triple|translate|summarize|compress|repeat).*(system[ -]?prompt)'
+    # All patterns from balanced.yaml plus stricter variants
+
+    # Class 1-7: Core patterns (stricter versions)
+    - '(?i)\b(system|inner|base|seed|meta|developer|hidden|secret|original|initial)[ -]?prompt\b'
+    - '(?i)(ignore|disregard|forget|override|bypass|skip|drop|cancel|reset).*(previous|all|earlier|above|prior|existing).*(instructions|commands|rules|guidelines|constraints|context)'
+    - '(?i)(get in touch with|channel|consult|access|retrieve|fetch).*\b(inner|seed|base|meta)[ -]?prompt\b'
+    - '(?i)(two|double|triple|translate|summarize|compress|repeat|rewrite|paraphrase).*(system[ -]?prompt|instructions|rules)'
     - '(?i)\b(.+)\s*=\s*(system|developer|base|inner|hidden)[ -]?prompt\b'
-    - '(?i)(reveal|print|expose|show|display|output).*(prompt|instructions|rules|config)'
-    - '(?i)\b(developer message|base instructions|original prompt|core directive)\b'
-    - '(?i)(what are you|tell me about your|describe your).*(instructions|prompt|system)'
+    - '(?i)(reveal|print|expose|show|display|output|dump|leak|extract|share|give|tell).*(prompt|instructions|rules|config|guidelines|directives)'
+    - '(?i)\b(developer message|base instructions|original prompt|core directive|initial instructions|secret instructions)\b'
+    - '(?i)(what are you|tell me about your|describe your|explain your).*(instructions|prompt|system|rules|guidelines|configuration)'
+
+    # Class 8: Role-play / persona hijacking
+    - '(?i)(pretend|act|behave|roleplay|role-play|simulate|imagine).*(you are|you''re|to be).*(different|new|another|unrestricted|unfiltered|evil|DAN|jailbreak)'
+    - '(?i)(from now on|starting now|henceforth|going forward).*(you are|you''re|act as|behave as|your name is)'
+    - '(?i)\b(DAN|Do Anything Now|STAN|DUDE|AIM|UCAR|Developer Mode|God Mode|Jailbreak)\b'
+    - '(?i)(enable|activate|enter|switch to|turn on).*(developer|debug|god|admin|root|sudo|unrestricted|jailbreak|unfiltered).*(mode|access)'
+    - '(?i)(you have no|remove all|there are no).*(restrictions|limitations|rules|constraints|filters|guardrails)'
+
+    # Class 9: Output exfiltration / data theft
+    - '(?i)(what|list|tell me|share|repeat|recite).*(all|every).*(user|customer|child|kid|student|family|parent).*(data|info|name|email|phone|address)'
+    - '(?i)(export|dump|download|extract|scrape|enumerate).*(database|table|record|user|data|profile|account)'
+    - '(?i)repeat.*(everything|all).*(above|before|previous|earlier|so far|in this conversation)'
+    - '(?i)(how many|count|number of).*(users|families|children|accounts|subscribers)'
+
+    # Class 10: Encoding / obfuscation bypasses
+    - '(?i)(rot13|rot-13|pig ?latin|reverse|backwards|caesar cipher|atbash).*(your|the|system).*(prompt|instructions|rules)'
+    - '(?i)(spell|say|write|type).*(backward|reverse|letter by letter|one letter at a time|character by character).*(instructions|prompt|rules)'
+    - '(?i)(first letter|initial|acrostic|acronym|nth character).*(each|every).*(sentence|word|line|paragraph|response)'
+
+    # Class 11: Multi-turn / context manipulation
+    - '(?i)(previous conversation|earlier you said|you already told me|you promised|we agreed|last time).*(share|reveal|show|give|tell).*(prompt|instructions|rules)'
+    - '(?i)(in our last|in a previous|during our earlier).*(session|chat|conversation).*(you shared|you revealed|you said|you showed)'
+    - '(?i)(continue from|pick up from|resume).*(where you left off|our last).*(sharing|revealing|showing)'
+
+    # Class 12: COPPA / child safety specific
+    - '(?i)(what|tell me|share|give me).*(child|kid|minor|student)''?s?.*(name|age|school|address|location|phone|email|grade|birthday|SSN|social security)'
+    - '(?i)(list|show|export|enumerate).*(all|every).*(child|kid|minor|student).*(profile|data|record|info)'
+    - '(?i)(where does|where is).*(child|kid|son|daughter).*(go to school|live|located|attend)'
+    - '(?i)(contact|message|email|call|text).*(child|kid|minor|student).*(directly|without parent)'
 
 output_rules:
   deny_ngrams:
@@ -36,11 +67,21 @@ output_rules:
     - "meta prompt"
     - "hidden prompt"
     - "original instructions"
+    - "core directive"
+    - "secret instructions"
+    - "my instructions say"
+    - "I was programmed to"
+    - "my configuration"
+    - "my training data"
   pii:
     email: true
     phone: true
     credit_card: true
-    ssn: true  # Also detect SSN in safe mode
+    ssn: true
+    child_name: true
+    child_school: true
+    child_location: true
+    child_age: true
 
 tools:
   rbac:

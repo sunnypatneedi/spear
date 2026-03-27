@@ -54,28 +54,53 @@ input_rules:
     - '(?i)use (the )?tool.*(dump|print|show|reveal).*(config|system|prompt)'
     - '(?i)(logs?|debug)\.dump.*config'
     
-    # === ORIGINAL PATTERNS (Preserved) ===
-    
-    # Direct exfil (general)
-    - '(?i)\b(system|inner|base|seed|meta)[ -]?prompt\b'
-    
-    # Override attempts
-    - '(?i)(ignore (previous|all) (instructions|commands))'
-    
-    # Synonym indirection
-    - '(?i)(get in touch with|channel|consult).*\b(inner|seed|base|meta)[ -]?prompt\b'
-    
-    # Transformation
-    - '(?i)(two|double|translate|summarize|compress).*(system[ -]?prompt)'
-    
-    # Equation pattern
-    - '(?i)\b(.+)\s*=\s*(system|developer|base|inner)[ -]?prompt\b'
-    
-    # Reveal attempts
-    - '(?i)(reveal|print|expose|show).*(prompt|instructions)'
-    
-    # Generic meta
-    - '(?i)\b(developer message|base instructions)\b'
+    # === ORIGINAL PATTERNS (7 attack classes) ===
+
+    # Class 1: Direct exfil (general)
+    - '(?i)\b(system|inner|base|seed|meta|hidden|secret|developer)[ -]?prompt\b'
+
+    # Class 2: Override attempts
+    - '(?i)(ignore|disregard|forget|override|bypass|skip|drop).*(previous|all|earlier|above|prior).*(instructions|commands|rules|guidelines|constraints)'
+
+    # Class 3: Synonym indirection
+    - '(?i)(get in touch with|channel|consult|access|retrieve|fetch).*\b(inner|seed|base|meta)[ -]?prompt\b'
+
+    # Class 4: Transformation
+    - '(?i)(two|double|translate|summarize|compress|repeat|rewrite).*(system[ -]?prompt|instructions)'
+
+    # Class 5: Equation pattern
+    - '(?i)\b(.+)\s*=\s*(system|developer|base|inner|hidden)[ -]?prompt\b'
+
+    # Class 6: Reveal attempts
+    - '(?i)(reveal|print|expose|show|display|output|dump|leak|extract).*(prompt|instructions|rules|config|guidelines)'
+
+    # Class 7: Generic meta references
+    - '(?i)\b(developer message|base instructions|original prompt|core directive|initial instructions)\b'
+
+    # === NEW: Class 8 — Role-play / persona hijacking ===
+    - '(?i)(pretend|act|behave|roleplay|role-play|simulate|imagine).*(you are|you''re|to be).*(different|new|another|unrestricted|unfiltered|evil|DAN|jailbreak)'
+    - '(?i)(from now on|starting now|henceforth).*(you are|you''re|act as|behave as)'
+    - '(?i)\b(DAN|Do Anything Now|STAN|DUDE|AIM|UCAR|Developer Mode)\b'
+    - '(?i)(enable|activate|enter|switch to).*(developer|debug|god|admin|root|sudo|unrestricted|jailbreak).*(mode|access)'
+
+    # === NEW: Class 9 — Output exfiltration / data theft ===
+    - '(?i)(what|list|tell me|share|repeat|recite).*(all|every).*(user|customer|child|kid|student|family|parent).*(data|info|name|email|phone|address)'
+    - '(?i)(export|dump|download|extract|scrape).*(database|table|record|user|data|profile)'
+    - '(?i)repeat.*(everything|all).*(above|before|previous|earlier|so far)'
+
+    # === NEW: Class 10 — Encoding / obfuscation bypasses ===
+    - '(?i)(rot13|rot-13|pig ?latin|reverse|backwards|caesar cipher).*(your|the|system).*(prompt|instructions|rules)'
+    - '(?i)(spell|say|write|type).*(backward|reverse|letter by letter|one letter at a time).*(instructions|prompt|rules)'
+    - '(?i)(first letter|initial|acrostic|acronym).*(each|every).*(sentence|word|line|paragraph)'
+
+    # === NEW: Class 11 — Multi-turn / context manipulation ===
+    - '(?i)(previous conversation|earlier you said|you already told me|you promised|we agreed).*(share|reveal|show|give|tell).*(prompt|instructions|rules)'
+    - '(?i)(in our last|in a previous|during our earlier).*(session|chat|conversation).*(you shared|you revealed|you said)'
+
+    # === NEW: Class 12 — COPPA / child safety specific ===
+    - '(?i)(what|tell me|share|give me).*(child|kid|minor|student)''?s?.*(name|age|school|address|location|phone|email|grade|birthday)'
+    - '(?i)(list|show|export).*(all|every).*(child|kid|minor|student).*(profile|data|record|info)'
+    - '(?i)(where does|where is).*(child|kid|son|daughter).*(go to school|live|located)'
 
 output_rules:
   deny_ngrams:
@@ -84,11 +109,22 @@ output_rules:
     - "base instructions"
     - "inner prompt"
     - "seed prompt"
+    - "meta prompt"
+    - "hidden prompt"
+    - "original instructions"
+    - "core directive"
+    - "my instructions say"
+    - "I was programmed to"
+    - "my configuration"
   pii:
     email: true
     phone: true
     credit_card: true
     ssn: false
+    # COPPA: detect child PII in outputs
+    child_name: true
+    child_school: true
+    child_location: true
 
 tools:
   rbac:
