@@ -192,14 +192,16 @@ describe('EmergentTracker', () => {
     expect(result.findings).toHaveLength(0);
   });
 
-  it('raises risk_ramp when step risk exceeds the threshold', () => {
+  it('raises risk_ramp when elevated risk persists across multiple steps', () => {
     const tracker = createEmergentTracker(
       agentPolicy({ risk_ramp_threshold: 0.5 }).emergent,
       'enforce',
     );
-    const result = tracker.recordStep([{ role: 'user', content: 'hello' }], 0.8);
-    expect(result.findings.some(f => f.class === 'risk_ramp')).toBe(true);
-    expect(result.allowed).toBe(false);
+    const first = tracker.recordStep([{ role: 'user', content: 'hello' }], 0.8);
+    expect(first.findings.some(f => f.class === 'risk_ramp')).toBe(false);
+    const second = tracker.recordStep([{ role: 'user', content: 'hello again' }], 0.8);
+    expect(second.findings.some(f => f.class === 'risk_ramp')).toBe(true);
+    expect(second.allowed).toBe(false);
   });
 
   it('ships default dangerous sequences', () => {
@@ -211,7 +213,10 @@ describe('SpearSession integration', () => {
   it('allows a single search call', async () => {
     const spear = createRuntime({ policy: agentPolicy(), mode: 'enforce' });
     const session = spear.session({ sessionId: 'emergent-search' });
-    const step = await session.step([{ role: 'user', content: 'What is photosynthesis?' }]);
+    const step = await session.step([
+      { role: 'system', content: 'You are a helpful assistant.' },
+      { role: 'user', content: 'What is photosynthesis?' },
+    ]);
     expect(step.allowed).toBe(true);
     const tools = await session.tools([{ name: 'search', arguments: { query: 'photosynthesis' } }]);
     expect(tools.allowed).toHaveLength(1);
@@ -221,7 +226,10 @@ describe('SpearSession integration', () => {
   it('blocks read_file then send_email even when both tools are RBAC-allowed', async () => {
     const spear = createRuntime({ policy: agentPolicy(), mode: 'enforce' });
     const session = spear.session({ sessionId: 'emergent-seq' });
-    await session.step([{ role: 'user', content: 'Help me file a report' }]);
+    await session.step([
+      { role: 'system', content: 'You are a helpful assistant.' },
+      { role: 'user', content: 'Help me file a report' },
+    ]);
 
     const first = await session.tools([{ name: 'read_file', arguments: { path: '/tmp/report.txt' } }]);
     expect(first.allowed).toHaveLength(1);

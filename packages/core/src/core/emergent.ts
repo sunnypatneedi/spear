@@ -260,7 +260,7 @@ export function containsSensitiveContent(text: string): boolean {
   if (/\/etc\/(?:passwd|shadow)/.test(text)) return true;
   if (/(?:aws_)?secret_access_key/.test(text)) return true;
   if (/-----BEGIN (?:RSA |OPENSSH |EC )?PRIVATE KEY-----/.test(text)) return true;
-  if (/\b(?:api[_-]?key|bearer\s+[a-z0-9._\-]+|password\s*[:=])/i.test(text)) return true;
+  if (/\b(?:api[_-]?key|bearer\s+[a-z0-9._-]+|password\s*[:=])/i.test(text)) return true;
   if (/\b(?:system|developer|inner)\s+prompt\b/i.test(text)) return true;
   return false;
 }
@@ -615,8 +615,18 @@ export class EmergentTracker {
   }
 
   private detectRiskRamp(): void {
-    const peak = this.eventRisk();
+    const stepRisks = this.events
+      .filter((e): e is EmergentEvent & { riskScore: number } =>
+        e.kind === 'step' && typeof e.riskScore === 'number'
+      )
+      .map(e => e.riskScore);
+    // A single gate failure is not emergent — it is already handled by InputGate /
+    // InstructionShield. Ramp means elevated risk across multiple steps.
+    if (stepRisks.length < 2) return;
+    const peak = Math.max(...stepRisks);
     if (peak < this.policy.risk_ramp_threshold) return;
+    const elevated = stepRisks.filter(r => r >= this.policy.risk_ramp_threshold / 2).length;
+    if (elevated < 2) return;
     this.addFinding({
       class: 'risk_ramp',
       severity: 'medium',
