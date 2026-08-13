@@ -21,7 +21,7 @@ spear/
 │   └── publish.yml             # npm publish on release
 ├── packages/
 │   ├── core/                   # @spear-secure/core (published)
-│   │   ├── src/core/           # canary, pii, policy, provenance, runtime, session, unicode
+│   │   ├── src/core/           # canary, pii, policy, provenance, runtime, session, unicode, emergent
 │   │   ├── src/gates/          # input_gate, instruction_shield, tool_mediator, output_gate
 │   │   ├── src/adapters/       # supabase-edge.ts (excluded from build)
 │   │   ├── policies/           # balanced.yaml, safe.yaml, permissive.yaml

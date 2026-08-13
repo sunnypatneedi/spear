@@ -20,7 +20,7 @@ This file provides AI-specific guidance for contributing to SPEAR Core (Secure P
 packages/core/
 ├── src/
 │   ├── gates/        # Security gates (standalone, composable)
-│   ├── core/         # Utilities (unicode, canary, pii, policy, provenance, runtime, session)
+│   ├── core/         # Utilities (unicode, canary, pii, policy, provenance, runtime, session, emergent)
 │   ├── adapters/     # Integration adapters (excluded from build)
 │   └── index.ts      # Public API exports
 ├── policies/         # YAML configurations (balanced, safe, permissive)

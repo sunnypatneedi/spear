@@ -13,6 +13,7 @@ import { readFileSync } from 'fs';
 import { resolve, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { provenancePolicySchema, type ProvenancePolicy } from './provenance.js';
+import { emergentPolicySchema } from './emergent.js';
 
 // ESM-safe __dirname replacement
 const __filename = fileURLToPath(import.meta.url);
@@ -176,6 +177,13 @@ export const policySchema = z.object({
    * - defaultToolSelectionMinLevel: Minimum trust for tool selection
    */
   provenance: provenancePolicySchema,
+
+  /**
+   * Emergent agent defense — session-level compositions that no single
+   * gate can see (collect-then-exfiltrate, dangerous tool sequences,
+   * mid-loop goal hijack, split canary exfil).
+   */
+  emergent: emergentPolicySchema,
 
   /**
    * Telemetry and attack pattern discovery
@@ -355,6 +363,12 @@ export function mergePolicy(base: Policy, override: Partial<Policy>): Policy {
         ...(base.provenance?.toolRequirements || []),
         ...(override.provenance?.toolRequirements || [])
       ]
+    },
+    emergent: {
+      ...base.emergent,
+      ...override.emergent,
+      dangerous_sequences:
+        override.emergent?.dangerous_sequences ?? base.emergent?.dangerous_sequences,
     },
     telemetry: {
       ...base.telemetry,

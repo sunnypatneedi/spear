@@ -82,7 +82,7 @@ export interface PostResult {
  */
 export interface TelemetryEvent {
   timestamp: string;
-  type: 'input' | 'output' | 'tool' | 'block' | 'capability_violation';
+  type: 'input' | 'output' | 'tool' | 'block' | 'capability_violation' | 'emergent';
   allowed: boolean;
   reason?: string;
   score?: number;
@@ -384,12 +384,12 @@ export class SpearRuntime {
     outputProvenance?: Provenance
   ): void {
     const contextKey = sessionId || 'default';
-    const context = this.toolContexts.get(contextKey);
-
-    if (context) {
-      const updated = recordToolOutput(context, toolName, outputProvenance);
-      this.toolContexts.set(contextKey, updated);
+    let context = this.toolContexts.get(contextKey);
+    if (!context) {
+      context = createMediationContext(sessionId, this.policy.provenance);
     }
+    const updated = recordToolOutput(context, toolName, outputProvenance);
+    this.toolContexts.set(contextKey, updated);
   }
 
   /**
@@ -404,6 +404,31 @@ export class SpearRuntime {
    */
   clearTelemetry(): void {
     this.telemetry = [];
+  }
+
+  /**
+   * Record a telemetry event (used by SpearSession for emergent findings).
+   *
+   * @param event Telemetry fields excluding timestamp
+   */
+  logTelemetry(event: Omit<TelemetryEvent, 'timestamp'>): void {
+    this.log(event);
+  }
+
+  /**
+   * Effective runtime mode (constructor override or policy.mode).
+   */
+  getMode(): 'shadow' | 'enforce' {
+    return this.mode;
+  }
+
+  /**
+   * Session canary token, if one has been generated.
+   *
+   * @param sessionId Session identifier
+   */
+  getSessionCanary(sessionId: string): string | undefined {
+    return this.canaryManager.getCanary(sessionId);
   }
 
   /**
@@ -472,6 +497,7 @@ export class SpearRuntime {
    * - Threads a single canary across ALL steps in the loop
    * - Accumulates peak risk score across the full session
    * - Provides batch parallel tool checking for concurrent tool_calls
+   * - Runs emergent defense on composed step/tool/observe traces
    *
    * @param options Session configuration (sessionId required)
    * @returns SpearSession instance for this agent loop
