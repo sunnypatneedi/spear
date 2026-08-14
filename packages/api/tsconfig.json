@@ -6,6 +6,5 @@
     "declarationMap": false,
     "sourceMap": false
   },
-  "include": ["src/**/*"],
-  "exclude": ["node_modules", "dist", "tests", "src/adapters/supabase-edge.ts"]
+  "include": ["src/**/*"]
 }

@@ -9,23 +9,18 @@
 
 import { z } from 'zod';
 import * as yaml from 'yaml';
-import { readFileSync } from 'fs';
-import { resolve, dirname } from 'path';
-import { fileURLToPath } from 'url';
-import { provenancePolicySchema, type ProvenancePolicy } from './provenance.js';
+import { provenancePolicySchema } from './provenance.js';
 import { emergentPolicySchema } from './emergent.js';
-
-// ESM-safe __dirname replacement
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
 
 /**
  * Similarity detection configuration
  */
 const similaritySchema = z.object({
   enabled: z.boolean().default(true),
-  threshold: z.number().min(0).max(1).default(0.70)
-}).default({ enabled: true, threshold: 0.70 });
+  threshold: z.number().min(0).max(1).default(0.70),
+  /** Run in-process TF-IDF/Jaccard first; call the sidecar only if local is below threshold. */
+  local_first: z.boolean().default(true)
+}).default({ enabled: true, threshold: 0.70, local_first: true });
 
 /**
  * Canary token configuration
@@ -149,6 +144,38 @@ const telemetrySchema = z.object({
 });
 
 /**
+ * Sliding-window rate limit / token budget (DoS and noisy-neighbor control)
+ */
+const rateLimitSchema = z.object({
+  enabled: z.boolean().default(false),
+  requests_per_window: z.number().int().positive().default(60),
+  window_seconds: z.number().int().positive().default(60),
+  token_budget: z.number().int().positive().default(100000),
+  per_user: z.object({
+    requests_per_window: z.number().int().positive().default(20),
+    window_seconds: z.number().int().positive().default(60)
+  }).default({ requests_per_window: 20, window_seconds: 60 })
+}).default({
+  enabled: false,
+  requests_per_window: 60,
+  window_seconds: 60,
+  token_budget: 100000,
+  per_user: { requests_per_window: 20, window_seconds: 60 }
+});
+
+/**
+ * Community attack-pattern registry (client). Disabled until an operator sets a URL.
+ */
+const registrySchema = z.object({
+  enabled: z.boolean().default(false),
+  contribute: z.boolean().default(false),
+  url: z.string().optional()
+}).default({
+  enabled: false,
+  contribute: false
+});
+
+/**
  * Complete policy schema
  *
  * Extended with CaMeL-inspired provenance policy for data flow tracking
@@ -184,6 +211,16 @@ export const policySchema = z.object({
    * mid-loop goal hijack, split canary exfil).
    */
   emergent: emergentPolicySchema,
+
+  /**
+   * Sliding-window rate limiting and per-session token budget.
+   */
+  rate_limit: rateLimitSchema,
+
+  /**
+   * Optional community pattern registry (hash-only contribution).
+   */
+  registry: registrySchema,
 
   /**
    * Telemetry and attack pattern discovery
@@ -223,7 +260,10 @@ function interpolateEnvVars(value: unknown): unknown {
   const pattern = /\$\{([^|]+)\|([^}]+)\}/g;
   
   return value.replace(pattern, (match, varName, defaultValue) => {
-    const envValue = process.env[varName.trim()];
+    const envValue =
+      typeof process !== 'undefined' && process.env
+        ? process.env[varName.trim()]
+        : undefined;
     return envValue !== undefined ? envValue : defaultValue.trim();
   });
 }
@@ -250,47 +290,6 @@ function interpolateObject(obj: unknown): unknown {
   }
   
   return interpolateEnvVars(obj);
-}
-
-/**
- * Load and validate a policy from a YAML file
- * 
- * @param policyPath Path to YAML policy file
- * @returns Validated policy object
- * @throws Error if file not found or validation fails
- * 
- * @example
- * ```typescript
- * const policy = loadPolicy('/path/to/balanced.yaml');
- * console.log(policy.mode); // 'shadow'
- * ```
- */
-export function loadPolicy(policyPath: string): Policy {
-  try {
-    // Resolve relative paths from the package root
-    const resolvedPath = policyPath.startsWith('/') 
-      ? policyPath 
-      : resolve(__dirname, '../../policies', policyPath);
-    
-    // Read YAML file
-    const content = readFileSync(resolvedPath, 'utf-8');
-    
-    // Parse YAML
-    const raw = yaml.parse(content);
-    
-    // Interpolate environment variables
-    const interpolated = interpolateObject(raw);
-    
-    // Validate with Zod
-    const validated = policySchema.parse(interpolated);
-    
-    return validated;
-  } catch (error) {
-    if (error instanceof Error) {
-      throw new Error(`Failed to load policy from ${policyPath}: ${error.message}`);
-    }
-    throw error;
-  }
 }
 
 /**
@@ -347,7 +346,18 @@ export function mergePolicy(base: Policy, override: Partial<Policy>): Policy {
     ...override,
     similarity: { ...base.similarity, ...override.similarity },
     canary: { ...base.canary, ...override.canary },
-    input_rules: { ...base.input_rules, ...override.input_rules },
+    input_rules: {
+      ...base.input_rules,
+      ...override.input_rules,
+      regex_block: override.input_rules?.regex_block
+        ? [
+            ...base.input_rules.regex_block,
+            ...override.input_rules.regex_block.filter(
+              p => !base.input_rules.regex_block.includes(p)
+            ),
+          ]
+        : base.input_rules.regex_block,
+    },
     output_rules: { ...base.output_rules, ...override.output_rules },
     tools: {
       rbac: {
@@ -369,6 +379,18 @@ export function mergePolicy(base: Policy, override: Partial<Policy>): Policy {
       ...override.emergent,
       dangerous_sequences:
         override.emergent?.dangerous_sequences ?? base.emergent?.dangerous_sequences,
+    },
+    rate_limit: {
+      ...base.rate_limit,
+      ...override.rate_limit,
+      per_user: {
+        ...base.rate_limit?.per_user,
+        ...override.rate_limit?.per_user,
+      },
+    },
+    registry: {
+      ...base.registry,
+      ...override.registry,
     },
     telemetry: {
       ...base.telemetry,

@@ -25,9 +25,17 @@
       "types": "./dist/core/unicode.d.ts",
       "default": "./dist/core/unicode.js"
     },
-    "./pii": {
-      "types": "./dist/core/pii.d.ts",
-      "default": "./dist/core/pii.js"
+    "./edge": {
+      "types": "./dist/edge.d.ts",
+      "default": "./dist/edge.js"
+    },
+    "./langchain": {
+      "types": "./dist/adapters/langchain.d.ts",
+      "default": "./dist/adapters/langchain.js"
+    },
+    "./vercel-ai": {
+      "types": "./dist/adapters/vercel-ai.d.ts",
+      "default": "./dist/adapters/vercel-ai.js"
     }
   },
   "scripts": {
@@ -61,7 +69,7 @@
   "files": [
     "dist",
     "policies",
-    "!dist/adapters",
+    "!dist/adapters/supabase-edge.*",
     "!dist/**/*.map",
     "!redteam"
   ],

@@ -129,67 +129,118 @@ export function extractCanaries(systemPrompt: string): string[] {
 
 /**
  * Canary token manager for session-based tracking
+ *
+ * Entries expire after `ttlMs` (default 30 minutes) and the map is capped
+ * at `maxEntries` to prevent unbounded growth in long-running servers.
  */
 export class CanaryManager {
-  private canaries: Map<string, string> = new Map();
+  private canaries: Map<string, { token: string; createdAt: number }> = new Map();
   private readonly tokenLength: number;
-  
-  constructor(tokenLength: number = 16) {
+  private readonly ttlMs: number;
+  private readonly maxEntries: number;
+
+  /**
+   * @param tokenLength Canary token length
+   * @param options.ttlMs Time-to-live for session canaries (default 30 minutes)
+   * @param options.maxEntries Hard cap on stored sessions (default 10_000)
+   */
+  constructor(
+    tokenLength: number = 16,
+    options: { ttlMs?: number; maxEntries?: number } = {}
+  ) {
     this.tokenLength = tokenLength;
+    this.ttlMs = options.ttlMs ?? 30 * 60 * 1000;
+    this.maxEntries = options.maxEntries ?? 10_000;
   }
-  
+
   /**
    * Generate and store a canary for a session
-   * 
+   *
    * @param sessionId Unique session identifier
    * @returns Generated canary token
    */
   generateForSession(sessionId: string): string {
-    const canary = generateCanary(this.tokenLength);
-    this.canaries.set(sessionId, canary);
-    return canary;
+    this.evictExpired();
+    const existing = this.canaries.get(sessionId);
+    if (existing && Date.now() - existing.createdAt <= this.ttlMs) {
+      return existing.token;
+    }
+    const token = generateCanary(this.tokenLength);
+    this.canaries.set(sessionId, { token, createdAt: Date.now() });
+    this.evictOverflow();
+    return token;
   }
-  
+
   /**
    * Get canary for a session
-   * 
+   *
    * @param sessionId Session identifier
-   * @returns Canary token or undefined if not found
+   * @returns Canary token or undefined if not found or expired
    */
   getCanary(sessionId: string): string | undefined {
-    return this.canaries.get(sessionId);
+    this.evictExpired();
+    return this.canaries.get(sessionId)?.token;
   }
-  
+
   /**
    * Check if text contains the session's canary
-   * 
+   *
    * @param sessionId Session identifier
    * @param text Text to check
    * @returns True if session canary is found in text
    */
   checkSession(sessionId: string, text: string): boolean {
-    const canary = this.canaries.get(sessionId);
+    const canary = this.getCanary(sessionId);
     if (!canary) return false;
-    
+
     return containsCanary(text, canary);
   }
-  
+
   /**
    * Remove canary for a session (cleanup)
-   * 
+   *
    * @param sessionId Session identifier
    */
   removeSession(sessionId: string): void {
     this.canaries.delete(sessionId);
   }
-  
+
   /**
    * Get all active canaries
-   * 
+   *
    * @returns Array of all canary tokens
    */
   getAllCanaries(): string[] {
-    return Array.from(this.canaries.values());
+    this.evictExpired();
+    return Array.from(this.canaries.values()).map(e => e.token);
+  }
+
+  /**
+   * Number of currently stored (non-evicted) session canaries
+   */
+  get size(): number {
+    this.evictExpired();
+    return this.canaries.size;
+  }
+
+  private evictExpired(): void {
+    const now = Date.now();
+    for (const [id, entry] of this.canaries) {
+      if (now - entry.createdAt > this.ttlMs) {
+        this.canaries.delete(id);
+      }
+    }
+  }
+
+  private evictOverflow(): void {
+    if (this.canaries.size <= this.maxEntries) return;
+    const overflow = this.canaries.size - this.maxEntries;
+    const oldest = [...this.canaries.entries()]
+      .sort((a, b) => a[1].createdAt - b[1].createdAt)
+      .slice(0, overflow);
+    for (const [id] of oldest) {
+      this.canaries.delete(id);
+    }
   }
 }
 

@@ -27,7 +27,18 @@ const ROLE_INJECTION_PATTERNS = [
   /role\s*[:=]\s*(system|developer)/i,
   /\{\s*"role"\s*:\s*"(system|developer)"/i,
   /you\s+are\s+now\s+(system|developer)/i,
-  /act\s+as\s+(system|developer)/i
+  /act\s+as\s+(system|developer)/i,
+  // ChatML (OpenAI / Qwen / many instruct models)
+  /<\|im_start\|>\s*system/i,
+  /<\|im_end\|>/i,
+  // Llama / Llama-2 / Code Llama
+  /<<SYS>>/i,
+  /\[INST\]/i,
+  /\[\/INST\]/i,
+  // Markdown heading role injection
+  /^#{1,6}\s*system\s*:/im,
+  // Newline delimiter injection ("\nsystem:\n")
+  /(?:^|\n)\s*system\s*:\s*(?:\n|$)/i,
 ];
 
 /**
@@ -87,8 +98,10 @@ function validateMessageOrder(messages: Message[]): { valid: boolean; reason?: s
     }
   });
   
-  // If there are system/developer messages after user messages, that's suspicious
-  if (highestUserIndex >= 0 && lowestPrivilegedIndex > highestUserIndex) {
+  // Privileged messages after a user message are suspicious. User-only
+  // arrays are normal chat traffic and must be allowed.
+  const hasPrivileged = lowestPrivilegedIndex < messages.length;
+  if (hasPrivileged && highestUserIndex >= 0 && lowestPrivilegedIndex > highestUserIndex) {
     return {
       valid: false,
       reason: 'System/developer messages should precede user messages'

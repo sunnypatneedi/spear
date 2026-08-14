@@ -11,6 +11,8 @@
 import { containsCanary, containsAnyCanary } from '../core/canary.js';
 import { containsPII, maskPII, type PIIConfig } from '../core/pii.js';
 import type { Policy } from '../core/policy.js';
+import { base64Decode } from '../core/platform.js';
+import { localSimilarity } from '../core/similarity.js';
 
 /**
  * Output gate input
@@ -38,6 +40,8 @@ export interface SidecarOptions {
   url?: string;
   budgetMs?: number;
   enabled?: boolean;
+  /** Bearer token matching SPEAR_SIDECAR_KEY on the sidecar. */
+  apiKey?: string;
 }
 
 /**
@@ -59,16 +63,7 @@ function containsDenyNgrams(output: string, ngrams: string[]): { matched: boolea
  * Safe base64 decode with error handling
  */
 function safeBase64Decode(str: string): string | null {
-  try {
-    // Node.js Buffer-based decoding
-    if (typeof Buffer !== 'undefined') {
-      return Buffer.from(str, 'base64').toString('utf-8');
-    }
-    // Browser/Deno atob fallback
-    return atob(str);
-  } catch {
-    return null;
-  }
+  return base64Decode(str);
 }
 
 /**
@@ -238,9 +233,13 @@ async function checkSidecarSimilarity(
   const timeout = setTimeout(() => controller.abort(), options.budgetMs || 30);
   
   try {
+    const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+    if (options.apiKey) {
+      headers.Authorization = `Bearer ${options.apiKey}`;
+    }
     const response = await fetch(`${options.url}/v1/similarity`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers,
       body: JSON.stringify({
         text: output,
         reference: systemPrompt
@@ -389,22 +388,31 @@ export async function outputGate(
     sanitizedOutput = maskPII(output, piiConfig);
   }
   
-  // Step 4: Optional sidecar similarity check
+  // Step 5: Similarity — local TF-IDF/Jaccard first, sidecar as fallback
   let similarityScore = 0;
-  if (policy.similarity.enabled && systemPrompt && sidecarOptions.url) {
-    const similarityResult = await checkSidecarSimilarity(
-      output,
-      systemPrompt,
-      {
-        ...sidecarOptions,
-        enabled: true,
-        budgetMs: sidecarOptions.budgetMs || policy.sidecar_budget_ms
-      }
-    );
-    
-    similarityScore = similarityResult.score;
-    
-    // If similarity exceeds threshold, block or flag
+  if (policy.similarity.enabled && systemPrompt) {
+    if (policy.similarity.local_first !== false) {
+      similarityScore = localSimilarity(output, systemPrompt);
+    }
+
+    const needSidecar =
+      sidecarOptions.url &&
+      (policy.similarity.local_first === false ||
+        similarityScore < policy.similarity.threshold);
+
+    if (needSidecar) {
+      const similarityResult = await checkSidecarSimilarity(
+        output,
+        systemPrompt,
+        {
+          ...sidecarOptions,
+          enabled: true,
+          budgetMs: sidecarOptions.budgetMs || policy.sidecar_budget_ms
+        }
+      );
+      similarityScore = Math.max(similarityScore, similarityResult.score);
+    }
+
     if (similarityScore >= policy.similarity.threshold) {
       if (policy.mode === 'enforce') {
         return {
@@ -414,7 +422,6 @@ export async function outputGate(
           score: similarityScore
         };
       }
-      // Shadow mode: allow but flag
     }
   }
   

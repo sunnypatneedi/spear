@@ -4,7 +4,8 @@ SPEAR Sidecar - FastAPI service for ML-based similarity detection
 Provides /v1/similarity endpoint for cross-lingual prompt similarity checks.
 """
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 from sentence_transformers import SentenceTransformer, util
 import os
@@ -27,7 +28,28 @@ else:
     system_embedding = None
     logger.warning("SPEAR_SYSTEM_TEXT not set - similarity checks will use request reference")
 
+API_KEY = os.environ.get("SPEAR_SIDECAR_KEY")
+if not API_KEY:
+    logger.warning(
+        "SPEAR_SIDECAR_KEY is not set — /v1/similarity is unauthenticated. "
+        "Set SPEAR_SIDECAR_KEY to prevent oracle attacks against the cached system prompt."
+    )
+
 app = FastAPI(title="SPEAR Sidecar", version="0.1.0")
+
+
+@app.middleware("http")
+async def require_api_key(request: Request, call_next):
+    """Bearer-token gate for similarity (skips / and /health)."""
+    if request.url.path in ("/", "/health"):
+        return await call_next(request)
+    if not API_KEY:
+        return await call_next(request)
+    header = request.headers.get("Authorization", "")
+    token = header.removeprefix("Bearer ").strip()
+    if token != API_KEY:
+        return JSONResponse({"error": "Unauthorized"}, status_code=401)
+    return await call_next(request)
 
 class SimilarityRequest(BaseModel):
     text: str
