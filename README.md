@@ -17,6 +17,8 @@ https://github.com/user-attachments/assets/65268509-de61-4d4e-9f7a-8439164db09e
 | [`@spear-secure/core`](./packages/core) | Security middleware for LLM I/O pipelines | Published |
 | [`@spear-secure/hook`](./packages/hook) | Claude Code PostToolUse hook | Published |
 | [`@spear-secure/mcp`](./packages/mcp) | MCP server for Claude Desktop, Cursor, Windsurf | Published |
+| [`@spear-secure/api`](./packages/api) | HTTP API (Docker) for Python/Go/Flowise/Dify | Preview |
+| [`spear-guard`](./packages/python) | Python SDK wrapping the HTTP API | Preview |
 | `@spear-secure/cli` | CLI for policy management | Planned |
 
 ---
@@ -46,7 +48,7 @@ Spear addresses all three.
 |-------|-------------|-----|
 | **Library** | Node.js / TypeScript builders | `npm install` — call `spear.pre()` / `spear.post()` |
 | **Session API** | Multi-step agent loops (ReAct, LangChain JS, Vercel AI SDK) | `spear.session()` — threads canary + provenance across steps |
-| **HTTP API** | Python / Go / Flowise / Dify builders | Docker container — REST calls, no npm (roadmap) |
+| **HTTP API** | Python / Go / Flowise / Dify builders | Docker container — REST calls, no npm |
 
 ---
 
@@ -162,30 +164,35 @@ while (true) {
 
 ---
 
-## Track 3: HTTP API — Python, Go, Flowise, Dify (roadmap)
+## Track 3: HTTP API — Python, Go, Flowise, Dify
 
 Most agent platforms — LangChain Python, CrewAI, AutoGPT, Dify, Flowise — cannot install npm packages. They need Spear as a service.
 
-**Planned**: A Docker container exposing Spear as a REST API:
-
 ```bash
+docker build -f packages/api/Dockerfile -t sunnypatneedi/spear-api .
 docker run -p 7700:7700 \
   -e SPEAR_MODE=enforce \
   -e SPEAR_POLICY=balanced \
   sunnypatneedi/spear-api
-
-# Python
-import requests
-result = requests.post('http://localhost:7700/pre', json={"messages": messages})
-
-# LangChain Python middleware
-class SpearGuardrail(BaseCallbackHandler):
-    def on_llm_start(self, serialized, prompts, **kwargs):
-        return requests.post('http://localhost:7700/pre', json={"messages": prompts})
 ```
 
-Track progress: [GitHub Issue #22](https://github.com/sunnypatneedi/spear/issues/22) — HTTP API for Python/polyglot builders.
-Python SDK: [GitHub Issue #23](https://github.com/sunnypatneedi/spear/issues/23).
+```python
+from spear_guard import quick, SpearBlockedError
+
+spear = quick("balanced", mode="enforce", url="http://localhost:7700")
+pre = spear.pre(messages)
+if not pre.allowed:
+    raise SpearBlockedError(pre.reason)
+```
+
+```python
+from spear_guard.integrations.langchain import SpearCallbackHandler
+
+llm = ChatOpenAI(callbacks=[SpearCallbackHandler(
+    spear_url="http://localhost:7700",
+    mode="enforce",
+)])
+```
 
 ---
 
@@ -500,13 +507,7 @@ Without the sidecar, Spear runs fully in-process. The sidecar is optional but re
 
 ## Roadmap
 
-See [GitHub Issues](https://github.com/sunnypatneedi/spear/issues) — prioritized into phases.
-
-**Near-term:**
-- [#22 HTTP API](https://github.com/sunnypatneedi/spear/issues/22) — Docker container for Python/Go/Flowise/Dify builders
-- [#23 Python SDK](https://github.com/sunnypatneedi/spear/issues/23) — native Pythonic API wrapping the HTTP API
-- [#24 Session taint v2](https://github.com/sunnypatneedi/spear/issues/24) — `observe()` fully wires into ToolMediator argument checks
-- [#25 LangChain integration](https://github.com/sunnypatneedi/spear/issues/25) — drop-in callback handler
+See [GitHub Issues](https://github.com/sunnypatneedi/spear/issues) for remaining work. The HTTP API, Python SDK, LangChain/Vercel adapters, edge runtime, and session taint loop shipped in this tree.
 
 ---
 

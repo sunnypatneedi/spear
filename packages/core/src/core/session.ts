@@ -35,10 +35,11 @@ import type { SpearRuntime } from './runtime.js';
 import type { Message } from '../gates/input_gate.js';
 import type { ToolCall, ToolMediatorResult, MediationContext } from '../gates/tool_mediator.js';
 import { toolMediator, createMediationContext } from '../gates/tool_mediator.js';
-import { createProvenance } from './provenance.js';
+import { createProvenance, minProvenance, type Provenance } from './provenance.js';
 import {
   createEmergentTracker,
   sourceToProvenanceLevel,
+  classifyToolRole,
   type EmergentInspectResult,
   type EmergentTracker,
 } from './emergent.js';
@@ -193,7 +194,7 @@ export class SpearSession {
     let emergent = this.tracker.inspect();
 
     for (let i = 0; i < toolCalls.length; i++) {
-      const call = toolCalls[i];
+      const call = this.applyObservedTaint(toolCalls[i]);
       const mediated = await toolMediator(call, this.mediationContext, policy);
       this.mediationContext = mediated.context;
 
@@ -314,6 +315,31 @@ export class SpearSession {
   /** Session identifier */
   get id(): string {
     return this.sessionId;
+  }
+
+  private applyObservedTaint(call: ToolCall): ToolCall {
+    if (call.argumentProvenance) return call;
+    const tainted = this.minObservedProvenance();
+    if (!tainted) return call;
+    const role = classifyToolRole(call.name);
+    if (role !== 'exfil' && role !== 'execute' && role !== 'write') return call;
+    const argumentProvenance: Record<string, Provenance> = {};
+    for (const key of Object.keys(call.arguments)) {
+      argumentProvenance[key] = tainted;
+    }
+    return { ...call, argumentProvenance };
+  }
+
+  private minObservedProvenance(): Provenance | undefined {
+    const records = this.mediationContext.outputProvenance;
+    if (!records || records.length === 0) return undefined;
+    let min = records[0];
+    for (const rec of records.slice(1)) {
+      if (minProvenance(rec.level, min.level) === rec.level) {
+        min = rec;
+      }
+    }
+    return min;
   }
 
   private blockRemaining(

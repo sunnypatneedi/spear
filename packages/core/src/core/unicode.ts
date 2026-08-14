@@ -64,13 +64,48 @@ export function stripZeroWidth(text: string): string {
 }
 
 /**
- * Apply all sanitization steps: NFKC normalization, Bidi strip, zero-width removal
- * 
+ * Decode HTML entities so encoded attacks cannot bypass regex gates.
+ *
+ * Handles numeric (`&#115;`, `&#x73;`) and a small named-entity set.
+ * Must run *before* NFKC so `&#115;ystem` becomes `system` for pattern matching.
+ *
+ * @param text Input text
+ */
+export function decodeHtmlEntities(text: string): string {
+  if (!text) return text;
+
+  const fromCode = (n: number): string => {
+    if (!Number.isFinite(n) || n < 0 || n > 0x10ffff) return '';
+    try {
+      return String.fromCodePoint(n);
+    } catch {
+      return '';
+    }
+  };
+
+  let result = text.replace(/&#x([0-9a-fA-F]{1,6});/g, (_m, hex: string) =>
+    fromCode(parseInt(hex, 16))
+  );
+  result = result.replace(/&#(\d{1,7});/g, (_m, dec: string) =>
+    fromCode(parseInt(dec, 10))
+  );
+  result = result.replace(/&lt;/g, '<');
+  result = result.replace(/&gt;/g, '>');
+  result = result.replace(/&quot;/g, '"');
+  result = result.replace(/&apos;/g, "'");
+  result = result.replace(/&nbsp;/g, ' ');
+  result = result.replace(/&amp;/g, '&');
+  return result;
+}
+
+/**
+ * Apply all sanitization steps: HTML-entity decode, NFKC, Bidi strip, zero-width removal
+ *
  * This is the recommended function to use for all user input processing.
- * 
+ *
  * @param text Input text
  * @returns Fully sanitized text
- * 
+ *
  * @example
  * ```typescript
  * const userInput = "Hello\u202EWorld"; // Contains Bidi override
@@ -79,15 +114,16 @@ export function stripZeroWidth(text: string): string {
  */
 export function sanitize(text: string): string {
   if (!text) return text;
-  
-  // Apply transformations in order:
-  // 1. NFKC normalization to handle compatibility characters
-  // 2. Strip Bidi control characters
-  // 3. Remove zero-width characters
-  let result = normalize(text);
+
+  // 1. Decode HTML entities (otherwise `&#115;ystem` bypasses every regex)
+  // 2. NFKC normalization to handle compatibility characters
+  // 3. Strip Bidi control characters
+  // 4. Remove zero-width characters
+  let result = decodeHtmlEntities(text);
+  result = normalize(result);
   result = stripBidi(result);
   result = stripZeroWidth(result);
-  
+
   return result;
 }
 

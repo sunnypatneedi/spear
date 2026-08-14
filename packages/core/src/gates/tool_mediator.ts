@@ -325,9 +325,29 @@ function checkArgumentProvenance(
     r => r.tool === toolCall.name || new RegExp(r.tool).test(toolCall.name)
   );
 
-  // If no specific requirements, allow
+  // If no specific requirements, still enforce tagged arguments on
+  // privileged (write/exfil) calls — this is session.observe() taint.
   if (!toolReq) {
-    return { allowed: true, violations: [] };
+    if (!toolCall.argumentProvenance) {
+      return { allowed: true, violations: [] };
+    }
+    for (const [argName, argProvenance] of Object.entries(toolCall.argumentProvenance)) {
+      if (
+        !hasCapability(argProvenance.level, 'tool_arg_write') &&
+        !hasCapability(argProvenance.level, 'transmit')
+      ) {
+        violations.push({
+          type: 'argument',
+          argumentName: argName,
+          provenanceLevel: argProvenance.level,
+          message: `Argument '${argName}' is tainted (${argProvenance.level}) and cannot be used for a privileged tool`
+        });
+      }
+    }
+    return {
+      allowed: violations.length === 0,
+      violations
+    };
   }
 
   // Check each argument with defined requirements

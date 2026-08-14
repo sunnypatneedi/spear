@@ -14,7 +14,7 @@
 
 // Import for internal use (quick function)
 import { createRuntime as createRuntimeImpl, type SpearRuntime } from './core/runtime.js';
-import { loadPolicy as loadPolicyImpl, type Policy } from './core/policy.js';
+import { loadPolicy as loadPolicyImpl } from './core/policy-load.js';
 import type { RuntimeOptions } from './core/runtime.js';
 
 // Core runtime
@@ -25,7 +25,8 @@ export type {
   PreResult,
   PostInput,
   PostResult,
-  TelemetryEvent
+  TelemetryEvent,
+  TelemetryExporter
 } from './core/runtime.js';
 
 // Session API — stateful context for multi-step agent loops
@@ -63,13 +64,13 @@ export type {
 
 // Policy management
 export {
-  loadPolicy,
   loadPolicyFromString,
   validatePolicy,
   getDefaultPolicy,
   mergePolicy,
   policySchema
 } from './core/policy.js';
+export { loadPolicy } from './core/policy-load.js';
 export type { Policy } from './core/policy.js';
 
 // Canary system
@@ -136,6 +137,7 @@ export {
   stripBidi,
   stripZeroWidth,
   sanitize,
+  decodeHtmlEntities,
   hasSuspiciousUnicode
 } from './core/unicode.js';
 
@@ -199,6 +201,22 @@ export {
 } from './gates/output_gate.js';
 export type { OutputGateInput, OutputGateResult, SidecarOptions } from './gates/output_gate.js';
 
+export { PolicyRegistry } from './core/policy-registry.js';
+export { localSimilarity, tfidfCosine, ngramJaccard } from './core/similarity.js';
+export { RateLimiter, estimateTokens } from './core/rate-limiter.js';
+export type { RateLimitConfig, RateLimitDecision } from './core/rate-limiter.js';
+export {
+  hashAttackPattern,
+  normalizeForRegistry,
+  syncPatternRegistry,
+  mergeRegistryPatterns,
+} from './registry/index.js';
+export { SpearCallbackHandler } from './adapters/langchain.js';
+export type { SpearCallbackOptions } from './adapters/langchain.js';
+export { withSpear } from './adapters/vercel-ai.js';
+export type { WithSpearOptions, SpearHandlerContext } from './adapters/vercel-ai.js';
+export { base64Decode } from './core/platform.js';
+
 /**
  * Package version
  */
@@ -223,14 +241,8 @@ export const VERSION = '0.1.1';
  */
 export function quick(
   policyName = 'balanced',
-  options: Partial<{
-    mode: 'shadow' | 'enforce';
-    sidecarUrl: string | null;
-    budgetMs: number;
-    enableLogging: boolean;
-    policy: Policy;
-  }> = {}
+  options: Partial<RuntimeOptions> = {}
 ): SpearRuntime {
   const policy = options.policy || loadPolicyImpl(`${policyName}.yaml`);
-  return createRuntimeImpl({ ...options, policy } as RuntimeOptions);
+  return createRuntimeImpl({ ...options, policy });
 }

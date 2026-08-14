@@ -81,7 +81,31 @@ const spear = quick('balanced', { mode: 'enforce' });
 
 ```typescript
 import { sanitize, hasSuspiciousUnicode } from '@spear-secure/core/unicode';
-import { detectPII, tokenizePII } from '@spear-secure/core/pii';
+import { quick as edgeQuick } from '@spear-secure/core/edge';
+import { SpearCallbackHandler } from '@spear-secure/core/langchain';
+import { withSpear } from '@spear-secure/core/vercel-ai';
+```
+
+`@spear-secure/core/edge` never touches `fs` / `path`. Pass `policy: loadPolicyFromString(yaml)` or use `getDefaultPolicy()`.
+
+Streaming output:
+
+```typescript
+for await (const chunk of spear.postStream(llmStream, { sessionId, canary: pre.canary })) {
+  res.write(chunk);
+}
+```
+
+OpenTelemetry (no OTel dependency in core — pass a callback):
+
+```typescript
+const spear = quick('balanced', {
+  telemetryExporter: {
+    export(event) {
+      span.setAttribute('spear.allowed', event.allowed);
+    },
+  },
+});
 ```
 
 ## Full Documentation

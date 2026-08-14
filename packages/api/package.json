@@ -1,0 +1,27 @@
+{
+  "name": "@spear-secure/api",
+  "version": "0.1.0",
+  "description": "HTTP API wrapping @spear-secure/core for Python/Go/Flowise/Dify builders",
+  "license": "AGPL-3.0-only",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "bin": {
+    "spear-api": "./dist/index.js"
+  },
+  "scripts": {
+    "build": "tsc --project tsconfig.json",
+    "typecheck": "tsc --project tsconfig.json --noEmit",
+    "start": "node dist/index.js"
+  },
+  "dependencies": {
+    "@spear-secure/core": "workspace:*"
+  },
+  "devDependencies": {
+    "typescript": "^5.5.0",
+    "@types/node": "^20.12.12"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

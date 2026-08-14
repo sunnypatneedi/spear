@@ -9,6 +9,7 @@
 similarity:
   enabled: true
   threshold: 0.70
+  local_first: true
 
 canary:
   enabled: true
@@ -69,13 +70,36 @@ input_rules:
     - '(?i)(two|double|translate|summarize|compress).*(system[ -]?prompt)'
     
     # Equation pattern
-    - '(?i)\b(.+)\s*=\s*(system|developer|base|inner)[ -]?prompt\b'
+    - '(?i)\b([^=]{0,50})\s*=\s*(system|developer|base|inner)[ -]?prompt\b'
     
     # Reveal attempts
     - '(?i)(reveal|print|expose|show).*(prompt|instructions)'
     
     # Generic meta
     - '(?i)\b(developer message|base instructions)\b'
+
+    # === MULTILINGUAL INJECTION (ES, ZH, FR, DE, AR) ===
+    # Spanish
+    - '(?i)prompt del sistema'
+    - '(?i)ignora (todas )?las instrucciones (anteriores|previas)'
+    - '(?i)instrucciones internas'
+    # French
+    - '(?i)prompt syst[eè]me'
+    - '(?i)ignore toutes les instructions pr[eé]c[eé]dentes'
+    - '(?i)instructions internes'
+    # German
+    - '(?i)systemaufforderung'
+    - '(?i)ignoriere alle vorherigen anweisungen'
+    - '(?i)internen anweisungen'
+    # Chinese (Simplified)
+    - '系统提示'
+    - '忽略之前的所有指令'
+    - '忽略.{0,40}指令'
+    - '种子提示'
+    # Arabic
+    - 'موجه النظام'
+    - 'تجاهل جميع التعليمات'
+    - 'رسالة المطور'
 
 output_rules:
   deny_ngrams:

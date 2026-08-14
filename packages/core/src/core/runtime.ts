@@ -22,19 +22,50 @@ import {
   type ToolMediatorResult,
   type CapabilityViolation
 } from '../gates/tool_mediator.js';
-import { CanaryManager } from './canary.js';
+import { CanaryManager, containsCanary } from './canary.js';
 import type { Provenance, ProvenanceLevel, ProvenancePolicy } from './provenance.js';
 import { SpearSession, type SessionOptions } from './session.js';
+import { PolicyRegistry } from './policy-registry.js';
+import { RateLimiter, estimateTokens } from './rate-limiter.js';
+import { syncPatternRegistry, mergeRegistryPatterns } from '../registry/index.js';
 
 /**
  * Runtime configuration options
  */
 export interface RuntimeOptions {
-  policy: Policy;
+  policy: Policy | PolicyRegistry;
   mode?: 'shadow' | 'enforce';
   sidecarUrl?: string | null;
+  sidecarApiKey?: string | null;
   budgetMs?: number;
   enableLogging?: boolean;
+  /** Optional exporter (OpenTelemetry or any sink). Core does not depend on OTel. */
+  telemetryExporter?: TelemetryExporter;
+}
+
+/**
+ * Pluggable telemetry sink. Wire OpenTelemetry from the application:
+ *
+ * ```ts
+ * import { trace } from '@opentelemetry/api';
+ * const tracer = trace.getTracer('spear');
+ * createRuntime({
+ *   policy,
+ *   telemetryExporter: {
+ *     export(event) {
+ *       const span = tracer.startSpan(`spear.${event.type}`);
+ *       span.setAttribute('spear.allowed', event.allowed);
+ *       span.setAttribute('spear.riskScore', event.score ?? 0);
+ *       if (event.reason) span.setAttribute('spear.reason', event.reason);
+ *       if (event.sessionId) span.setAttribute('spear.sessionId', event.sessionId);
+ *       span.end();
+ *     }
+ *   }
+ * });
+ * ```
+ */
+export interface TelemetryExporter {
+  export(event: TelemetryEvent): void;
 }
 
 /**
@@ -43,6 +74,7 @@ export interface RuntimeOptions {
 export interface PreContext {
   userId?: string;
   sessionId?: string;
+  tenantId?: string;
   lang?: string;
   metadata?: Record<string, unknown>;
 }
@@ -56,6 +88,8 @@ export interface PreResult {
   messages: Message[];
   canary?: string;
   riskScore: number;
+  /** Present when the request was rejected by the rate limiter. */
+  retryAfterMs?: number;
 }
 
 /**
@@ -82,7 +116,7 @@ export interface PostResult {
  */
 export interface TelemetryEvent {
   timestamp: string;
-  type: 'input' | 'output' | 'tool' | 'block' | 'capability_violation' | 'emergent';
+  type: 'input' | 'output' | 'tool' | 'block' | 'capability_violation' | 'emergent' | 'rate_limit';
   allowed: boolean;
   reason?: string;
   score?: number;
@@ -104,23 +138,41 @@ export interface TelemetryEvent {
  */
 export class SpearRuntime {
   private policy: Policy;
+  private registry?: PolicyRegistry;
   private mode: 'shadow' | 'enforce';
   private sidecarOptions: SidecarOptions;
   private canaryManager: CanaryManager;
   private enableLogging: boolean;
   private telemetry: TelemetryEvent[] = [];
-  private toolContexts: Map<string, MediationContext> = new Map();
+  private toolContexts: Map<string, { ctx: MediationContext; createdAt: number }> = new Map();
+  private readonly contextTtlMs = 30 * 60 * 1000;
+  private rateLimiter: RateLimiter;
+  private telemetryExporter?: TelemetryExporter;
 
   constructor(options: RuntimeOptions) {
-    this.policy = options.policy;
-    this.mode = options.mode || options.policy.mode;
+    if (options.policy instanceof PolicyRegistry) {
+      this.registry = options.policy;
+      this.policy = options.policy.getBase();
+    } else {
+      this.policy = options.policy;
+    }
+    this.mode = options.mode || this.policy.mode;
+    const sidecarKey =
+      options.sidecarApiKey ??
+      (typeof process !== 'undefined' && process.env
+        ? process.env.SPEAR_SIDECAR_KEY
+        : undefined) ??
+      undefined;
     this.sidecarOptions = {
       url: options.sidecarUrl || undefined,
-      budgetMs: options.budgetMs || options.policy.sidecar_budget_ms,
-      enabled: !!options.sidecarUrl
+      budgetMs: options.budgetMs || this.policy.sidecar_budget_ms,
+      enabled: !!options.sidecarUrl,
+      apiKey: sidecarKey
     };
-    this.canaryManager = new CanaryManager(options.policy.canary.token_len);
+    this.canaryManager = new CanaryManager(this.policy.canary.token_len);
     this.enableLogging = options.enableLogging !== false;
+    this.rateLimiter = new RateLimiter(this.policy.rate_limit);
+    this.telemetryExporter = options.telemetryExporter;
   }
 
   /**
@@ -140,6 +192,24 @@ export class SpearRuntime {
     if (this.telemetry.length > 1000) {
       this.telemetry = this.telemetry.slice(-1000);
     }
+
+    this.telemetryExporter?.export(fullEvent);
+  }
+
+  private resolvePolicy(context: PreContext): Policy {
+    if (this.registry && context.tenantId) {
+      return this.registry.resolve(context.tenantId);
+    }
+    return this.policy;
+  }
+
+  private evictToolContexts(): void {
+    const now = Date.now();
+    for (const [id, entry] of this.toolContexts) {
+      if (now - entry.createdAt > this.contextTtlMs) {
+        this.toolContexts.delete(id);
+      }
+    }
   }
 
   /**
@@ -152,11 +222,36 @@ export class SpearRuntime {
    * @returns Pre-processing result
    */
   async pre(messages: Message[], context: PreContext = {}): Promise<PreResult> {
-    const startTime = Date.now();
+    const policy = this.resolvePolicy(context);
 
     try {
+      const chars = messages.map(m => m.content).join('');
+      const rate = this.rateLimiter.check(
+        context.sessionId || context.userId || 'anon',
+        context.userId,
+        estimateTokens(chars)
+      );
+      if (!rate.allowed) {
+        this.log({
+          type: 'rate_limit',
+          allowed: false,
+          reason: rate.reason,
+          sessionId: context.sessionId,
+          userId: context.userId
+        });
+        if (this.mode === 'enforce') {
+          return {
+            allowed: false,
+            reason: rate.reason,
+            messages,
+            riskScore: 0,
+            retryAfterMs: rate.retryAfterMs
+          };
+        }
+      }
+
       // Step 1: Input gate (Unicode sanitization + pattern matching)
-      const inputResult: InputGateResult = await inputGate(messages, this.policy);
+      const inputResult: InputGateResult = await inputGate(messages, policy);
 
       if (!inputResult.allowed) {
         this.log({
@@ -181,7 +276,7 @@ export class SpearRuntime {
       }
 
       // Step 2: Instruction shield (role hierarchy enforcement)
-      const shieldResult: ShieldResult = await instructionShield(inputResult.messages, this.policy);
+      const shieldResult: ShieldResult = await instructionShield(inputResult.messages, policy);
 
       if (!shieldResult.allowed) {
         this.log({
@@ -204,7 +299,7 @@ export class SpearRuntime {
 
       // Step 3: Generate canary if enabled and session exists
       let canary: string | undefined;
-      if (this.policy.canary.enabled && context.sessionId) {
+      if (policy.canary.enabled && context.sessionId) {
         canary = this.canaryManager.generateForSession(context.sessionId);
       }
 
@@ -233,7 +328,15 @@ export class SpearRuntime {
         userId: context.userId
       });
 
-      // Fail-open: allow but log error
+      if (this.mode === 'enforce') {
+        return {
+          allowed: false,
+          reason: `Security gate internal error`,
+          messages: [],
+          riskScore: 1.0
+        };
+      }
+      // Shadow mode: fail-open, log the error
       return {
         allowed: true,
         messages,
@@ -252,6 +355,7 @@ export class SpearRuntime {
    * @returns Post-processing result
    */
   async post(input: PostInput, context: PreContext = {}): Promise<PostResult> {
+    const policy = this.resolvePolicy(context);
     try {
       // Get canary for session if exists
       const canaries: string[] = [];
@@ -274,7 +378,7 @@ export class SpearRuntime {
 
       const result: OutputGateResult = await outputGate(
         gateInput,
-        this.policy,
+        policy,
         this.sidecarOptions
       );
 
@@ -304,7 +408,14 @@ export class SpearRuntime {
         userId: context.userId
       });
 
-      // Fail-open: allow but log error
+      if (this.mode === 'enforce') {
+        return {
+          allowed: false,
+          reason: 'Security gate internal error',
+          output: '',
+          riskScore: 1.0
+        };
+      }
       return {
         allowed: true,
         output: input.output,
@@ -322,50 +433,64 @@ export class SpearRuntime {
    */
   async mediateToolCall(toolCall: ToolCall, sessionId?: string): Promise<ToolMediatorResult> {
     const contextKey = sessionId || 'default';
+    this.evictToolContexts();
 
-    // Get or create context for session
-    let context = this.toolContexts.get(contextKey);
-    if (!context) {
-      // Initialize with provenance policy from main policy
-      context = createMediationContext(sessionId, this.policy.provenance);
-      this.toolContexts.set(contextKey, context);
-    } else if (!context.provenancePolicy && this.policy.provenance) {
-      // Ensure provenance policy is set if added after context creation
-      context = setProvenancePolicy(context, this.policy.provenance);
-      this.toolContexts.set(contextKey, context);
-    }
+    try {
+      const entry = this.toolContexts.get(contextKey);
+      let context = entry?.ctx;
+      if (!context) {
+        context = createMediationContext(sessionId, this.policy.provenance);
+        this.toolContexts.set(contextKey, { ctx: context, createdAt: Date.now() });
+      } else if (!context.provenancePolicy && this.policy.provenance) {
+        context = setProvenancePolicy(context, this.policy.provenance);
+        this.toolContexts.set(contextKey, { ctx: context, createdAt: entry?.createdAt ?? Date.now() });
+      }
 
-    // Mediate call
-    const result = await toolMediator(toolCall, context, this.policy);
+      const result = await toolMediator(toolCall, context, this.policy);
+      this.toolContexts.set(contextKey, { ctx: result.context, createdAt: entry?.createdAt ?? Date.now() });
 
-    // Update context
-    this.toolContexts.set(contextKey, result.context);
-
-    // Log with provenance info
-    this.log({
-      type: result.allowed ? 'tool' : 'block',
-      allowed: result.allowed,
-      reason: result.reason,
-      sessionId,
-      provenance: toolCall.selectionProvenance ? {
-        level: toolCall.selectionProvenance.level,
-        source: toolCall.selectionProvenance.source
-      } : undefined,
-      capabilityViolations: result.capabilityViolations
-    });
-
-    // Log capability violations separately for shadow mode monitoring
-    if (result.capabilityViolations && result.capabilityViolations.length > 0) {
       this.log({
-        type: 'capability_violation',
-        allowed: result.allowed, // May be true in shadow mode
-        reason: result.capabilityViolations.map(v => v.message).join('; '),
+        type: result.allowed ? 'tool' : 'block',
+        allowed: result.allowed,
+        reason: result.reason,
         sessionId,
+        provenance: toolCall.selectionProvenance ? {
+          level: toolCall.selectionProvenance.level,
+          source: toolCall.selectionProvenance.source
+        } : undefined,
         capabilityViolations: result.capabilityViolations
       });
-    }
 
-    return result;
+      if (result.capabilityViolations && result.capabilityViolations.length > 0) {
+        this.log({
+          type: 'capability_violation',
+          allowed: result.allowed,
+          reason: result.capabilityViolations.map(v => v.message).join('; '),
+          sessionId,
+          capabilityViolations: result.capabilityViolations
+        });
+      }
+
+      return result;
+    } catch (error) {
+      this.log({
+        type: 'block',
+        allowed: false,
+        reason: `Tool mediation error: ${error instanceof Error ? error.message : String(error)}`,
+        sessionId
+      });
+      if (this.mode === 'enforce') {
+        return {
+          allowed: false,
+          reason: 'Security gate internal error',
+          context: createMediationContext(sessionId, this.policy.provenance)
+        };
+      }
+      return {
+        allowed: true,
+        context: createMediationContext(sessionId, this.policy.provenance)
+      };
+    }
   }
 
   /**
@@ -384,12 +509,14 @@ export class SpearRuntime {
     outputProvenance?: Provenance
   ): void {
     const contextKey = sessionId || 'default';
-    let context = this.toolContexts.get(contextKey);
+    this.evictToolContexts();
+    const entry = this.toolContexts.get(contextKey);
+    let context = entry?.ctx;
     if (!context) {
       context = createMediationContext(sessionId, this.policy.provenance);
     }
     const updated = recordToolOutput(context, toolName, outputProvenance);
-    this.toolContexts.set(contextKey, updated);
+    this.toolContexts.set(contextKey, { ctx: updated, createdAt: entry?.createdAt ?? Date.now() });
   }
 
   /**
@@ -432,6 +559,71 @@ export class SpearRuntime {
   }
 
   /**
+   * Stream-aware output gate.
+   *
+   * Yields chunks as they arrive. Aborts if a canary or deny-listed n-gram
+   * appears mid-stream (enforce mode). After the stream ends, runs the full
+   * OutputGate; if that blocks, the generator throws.
+   *
+   * @param chunks Async iterable of output chunks
+   * @param context Session context plus optional canary / system prompt
+   */
+  async *postStream(
+    chunks: AsyncIterable<string>,
+    context: PreContext & { canary?: string; systemPrompt?: string } = {}
+  ): AsyncGenerator<string> {
+    const policy = this.resolvePolicy(context);
+    let buffer = '';
+    const canary = context.canary ?? (context.sessionId ? this.canaryManager.getCanary(context.sessionId) : undefined);
+
+    for await (const chunk of chunks) {
+      buffer += chunk;
+      if (canary && containsCanary(buffer, canary)) {
+        this.log({
+          type: 'block',
+          allowed: false,
+          reason: 'Canary token detected mid-stream',
+          sessionId: context.sessionId,
+          userId: context.userId,
+          score: 1
+        });
+        throw new Error('Canary token detected mid-stream');
+      }
+      if (this.mode === 'enforce') {
+        const lower = buffer.toLowerCase();
+        const hit = policy.output_rules.deny_ngrams.find(n => lower.includes(n.toLowerCase()));
+        if (hit) {
+          throw new Error(`Output contains deny-listed phrase: ${hit}`);
+        }
+      }
+      yield chunk;
+    }
+
+    const final = await this.post(
+      { output: buffer, canary, systemPrompt: context.systemPrompt },
+      context
+    );
+    if (!final.allowed) {
+      throw new Error(final.reason || 'Output blocked');
+    }
+  }
+
+  /**
+   * Fetch promoted attack patterns from the community registry and merge
+   * them into the active policy. Optionally contribute a hash of a blocked
+   * snippet. Never sends raw user content.
+   *
+   * @param attackText Optional blocked input to contribute as a hash
+   */
+  async syncPatternRegistry(attackText?: string): Promise<{ patterns: number }> {
+    const result = await syncPatternRegistry(this.policy, attackText);
+    if (result.patterns.length > 0) {
+      this.policy = mergeRegistryPatterns(this.policy, result.patterns);
+    }
+    return { patterns: result.patterns.length };
+  }
+
+  /**
    * Get policy configuration
    */
   getPolicy(): Policy {
@@ -447,8 +639,11 @@ export class SpearRuntime {
 
     // Update provenance policy on all existing contexts
     if (newPolicy.provenance) {
-      for (const [key, context] of this.toolContexts) {
-        this.toolContexts.set(key, setProvenancePolicy(context, newPolicy.provenance));
+      for (const [key, entry] of this.toolContexts) {
+        this.toolContexts.set(key, {
+          ctx: setProvenancePolicy(entry.ctx, newPolicy.provenance),
+          createdAt: entry.createdAt,
+        });
       }
     }
   }
@@ -486,7 +681,8 @@ export class SpearRuntime {
    */
   getSessionOutputProvenance(sessionId?: string): Provenance[] {
     const contextKey = sessionId || 'default';
-    const context = this.toolContexts.get(contextKey);
+    this.evictToolContexts();
+    const context = this.toolContexts.get(contextKey)?.ctx;
     return context?.outputProvenance || [];
   }
 
