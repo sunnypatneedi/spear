@@ -88,7 +88,7 @@ input_rules:
     - '(?i)ignore toutes les instructions pr[eé]c[eé]dentes'
     - '(?i)instructions internes'
     # German
-    - '(?i)system[ -]?prompt'
+    - '(?i)systemaufforderung'
     - '(?i)ignoriere alle vorherigen anweisungen'
     - '(?i)internen anweisungen'
     # Chinese (Simplified)

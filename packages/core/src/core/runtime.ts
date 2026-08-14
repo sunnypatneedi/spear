@@ -436,7 +436,7 @@ export class SpearRuntime {
     this.evictToolContexts();
 
     try {
-      let entry = this.toolContexts.get(contextKey);
+      const entry = this.toolContexts.get(contextKey);
       let context = entry?.ctx;
       if (!context) {
         context = createMediationContext(sessionId, this.policy.provenance);
@@ -510,7 +510,7 @@ export class SpearRuntime {
   ): void {
     const contextKey = sessionId || 'default';
     this.evictToolContexts();
-    let entry = this.toolContexts.get(contextKey);
+    const entry = this.toolContexts.get(contextKey);
     let context = entry?.ctx;
     if (!context) {
       context = createMediationContext(sessionId, this.policy.provenance);
