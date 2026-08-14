@@ -102,6 +102,19 @@ tools:
 # Environment-controlled mode (shadow|enforce)
 mode: ${SPEAR_MODE|shadow}
 
+# Emergent agent defense — compositions no single gate can see.
+# Shadow-inherited: findings are recorded, not blocked, until SPEAR_MODE=enforce.
+emergent:
+  enabled: true
+  sensitive_then_transmit: true
+  goal_hijack: true
+  split_exfil: true
+  argument_escalation: true
+  risk_ramp_threshold: 0.9
+  # collect_then_exfiltrate is off: "search then email me a summary" is a common
+  # legitimate workflow. Safe profile turns this on.
+  collect_then_exfiltrate: false
+
 # Performance budgets (milliseconds)
 latency_budget_ms: 350
 sidecar_budget_ms: 30

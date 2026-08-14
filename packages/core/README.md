@@ -43,6 +43,7 @@ User Input → InputGate → InstructionShield → [LLM] → OutputGate → Safe
 - **InstructionShield**: Role hierarchy enforcement, system prompt protection
 - **OutputGate**: Canary exfiltration detection, PII masking, encoded leak scanning
 - **ToolMediator**: CaMeL-inspired data provenance, capability-based tool RBAC
+- **Emergent defense**: Session-level compositions (collect-then-exfil, goal hijack, split canary)
 
 ## Session API
 
@@ -54,6 +55,7 @@ const session = spear.session({ sessionId: 'agent-001', userId: 'u-42' });
 const step = await session.step(messages);          // pre-gate with persistent canary
 const { allowed, blocked } = await session.tools(toolCalls); // batch tool checks
 session.observe(results, { source: 'external' });   // tag tool outputs with provenance
+const snapshot = session.inspect();                  // emergent composition findings
 const final = await session.complete(output);        // final output gate
 ```
 

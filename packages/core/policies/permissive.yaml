@@ -35,6 +35,9 @@ tools:
 
 mode: shadow  # Always shadow in permissive
 
+emergent:
+  enabled: false
+
 latency_budget_ms: 500
 sidecar_budget_ms: 50
 

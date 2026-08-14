@@ -34,6 +34,7 @@ const post = await spear.post({ output: response, canary: pre.canary });
 - OutputGate: Canary exfiltration detection, PII masking, encoded leak scanning
 - ToolMediator: CaMeL-inspired data provenance, capability-based tool RBAC
 - Session API: Stateful multi-step agent loop security (session.step/tools/complete)
+- Emergent defense: Blocks composed attacks (read_file then send_email, mid-loop goal hijack, split canary)
 - Shadow mode: Observe before enforce — policy-as-code with YAML
 
 ## Links

@@ -37,6 +37,30 @@ export type {
   SessionCompletionResult
 } from './core/session.js';
 
+// Emergent agent defense — session-level composition checks
+export {
+  EmergentTracker,
+  createEmergentTracker,
+  classifyToolRole,
+  normalizeToolName,
+  toolNameMatches,
+  sourceToProvenanceLevel,
+  containsSensitiveContent,
+  containsGoalHijack,
+  DEFAULT_DANGEROUS_SEQUENCES,
+  emergentPolicySchema,
+} from './core/emergent.js';
+export type {
+  ToolRole,
+  EmergentFindingClass,
+  EmergentSeverity,
+  EmergentFinding,
+  EmergentEvent,
+  EmergentInspectResult,
+  EmergentPolicy,
+  DangerousSequence,
+} from './core/emergent.js';
+
 // Policy management
 export {
   loadPolicy,

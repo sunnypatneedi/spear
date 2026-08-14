@@ -52,6 +52,16 @@ tools:
 
 mode: enforce  # Actively block attacks
 
+# Emergent agent defense — stricter: any untrusted observe then transmit/execute is blocked
+emergent:
+  enabled: true
+  collect_then_exfiltrate: true
+  sensitive_then_transmit: true
+  goal_hijack: true
+  split_exfil: true
+  argument_escalation: true
+  risk_ramp_threshold: 0.75
+
 latency_budget_ms: 400  # Slightly higher budget for safety checks
 sidecar_budget_ms: 40
 

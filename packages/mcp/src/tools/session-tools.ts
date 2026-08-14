@@ -15,7 +15,7 @@ const inputSchema = {
 export function registerSessionTools(server: McpServer): void {
   server.tool(
     'spear_session_tools',
-    'Batch-check parallel tool calls within an active session. Returns allowed and blocked subsets with RBAC and capability enforcement.',
+    'Batch-check parallel tool calls within an active session. Returns allowed and blocked subsets with RBAC, capability, and emergent composition enforcement.',
     inputSchema,
     async ({ sessionId, toolCalls }) => {
       try {
@@ -28,6 +28,7 @@ export function registerSessionTools(server: McpServer): void {
           allowed: result.allowed.map(r => ({ allowed: r.allowed, reason: r.reason })),
           blocked: result.blocked.map(r => ({ allowed: r.allowed, reason: r.reason })),
           total: result.total,
+          emergent: result.emergent,
         });
       } catch (err) {
         return errorResponse(err instanceof Error ? err.message : String(err));

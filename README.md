@@ -158,6 +158,7 @@ while (true) {
 | Risk score | Isolated per step | **Accumulated peak across session** |
 | Tool batch | Singular `mediateToolCall()` | **`tools([A,B,C])` checks all at once** |
 | Provenance | Resets each call | **Persists taint records across steps** |
+| Composed attacks | Each call looks allowed | **Emergent defense blocks collect-then-exfil / goal hijack** |
 
 ---
 
@@ -220,6 +221,11 @@ User Input
           │  ToolMediator  │  For agentic pipelines: capability-based tool RBAC,
           │                │  CaMeL-inspired data provenance enforcement
           └────────────────┘
+
+          ┌─────────────────────┐
+          │  Emergent defense   │  Session-level: dangerous tool compositions,
+          │                     │  collect-then-exfil, mid-loop goal hijack
+          └─────────────────────┘
 ```
 
 **Shadow mode** logs violations without blocking. **Enforce mode** blocks. You start in shadow, observe, tune, then enforce. No guessing.
@@ -411,6 +417,10 @@ const { allowed, blocked } = await session.tools([callA, callB, callC]);
 // Tag tool results with provenance source
 session.observe(results, { source: 'external' });
 
+// Inspect composed (emergent) findings without a new event
+const snapshot = session.inspect();
+// snapshot.findings — dangerous_sequence, goal_hijack, split_exfil, …
+
 // Final output gate with session-accumulated canary
 const final = await session.complete(llmFinalOutput);
 // final.sessionRiskScore — peak risk across all steps
@@ -480,6 +490,7 @@ Without the sidecar, Spear runs fully in-process. The sidecar is optional but re
 | Canary exfiltration detection | ✅ | ❌ | ❌ | ❌ | ❌ |
 | CaMeL data provenance | ✅ | ❌ | ❌ | ❌ | ❌ |
 | Session-scoped agent API | ✅ | ❌ | ❌ | ❌ | ❌ |
+| Emergent composition defense | ✅ | ❌ | ❌ | ❌ | ❌ |
 | Shadow mode (observe before block) | ✅ | ❌ | ❌ | ❌ | ❌ |
 | Policy-as-code (YAML + CI eval) | ✅ | partial | ✅ | ❌ | ❌ |
 | Tool RBAC | ✅ | ❌ | ❌ | ❌ | ❌ |
