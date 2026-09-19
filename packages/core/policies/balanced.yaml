@@ -122,6 +122,47 @@ tools:
     deny: []
     max_calls: 3
     max_depth: 2
+    # High-impact actions stay observable in shadow mode and require the
+    # server-side approvalVerifier when the runtime is switched to enforce.
+    require_approval:
+      - '(?i)(^|[._-])(send|delete|remove|write|update|upload|publish|deploy|exec|shell|run|payment|transfer|grant|rotate|install|credential|secret)'
+    approval_mode: shadow
+    unsafe_payload_mode: shadow
+
+agent:
+  enabled: true
+  max_steps: 32
+  max_duration_ms: 900000
+  max_tool_calls: 100
+  max_consecutive_same_tool: 5
+  circuit_breaker_on_taint: true
+
+egress:
+  enabled: true
+  allow_schemes: [https]
+  allowed_hosts: []
+  denied_hosts:
+    - localhost
+    - 127.0.0.1
+    - 0.0.0.0
+    - ::1
+    - 169.254.169.254
+    - metadata.google.internal
+    - metadata.google
+    - 100.100.100.200
+  suspicious_hosts:
+    - requestbin.com
+    - webhook.site
+    - pastebin.com
+    - transfer.sh
+    - file.io
+    - 0x0.st
+  block_private_networks: true
+  block_credentials_in_url: true
+  block_untrusted_transmit: true
+  scan_secrets: true
+  allow_redirects: false
+  max_url_length: 2048
 
 # Environment-controlled mode (shadow|enforce)
 mode: ${SPEAR_MODE|shadow}
@@ -143,8 +184,10 @@ emergent:
 latency_budget_ms: 350
 sidecar_budget_ms: 30
 
+# Keep existing rollout behavior, but allow explicit fail-closed deployments.
+fail_closed: false
+
 # Default refusal messages
 refusal_phrases:
   - "I can't share internal instructions or system prompts."
   - "I'm not able to discuss my internal configuration."
-

@@ -112,3 +112,13 @@ pnpm --filter @spear-secure/mcp typecheck
 ## License
 
 AGPL-3.0-only
+
+### Observing tool results
+
+Call `spear_session_observe` with `sessionId`, `results` (an array), and an
+optional `source` of `external`, `tool`, or `untrusted`. It returns the scan
+verdict and existing emergent findings. Model-authored observations cannot claim
+`system` or `user` provenance. In enforce mode a tainted observation stops later
+session operations. Approval tokens are only references for an application-owned
+verifier; the stock MCP server does not configure such a verifier or accept
+trusted tool-selection provenance.

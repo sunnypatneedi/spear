@@ -6,6 +6,7 @@ import { registerMediateTool } from './tools/mediate-tool.js';
 import { registerSessionStart } from './tools/session-start.js';
 import { registerSessionStep } from './tools/session-step.js';
 import { registerSessionTools } from './tools/session-tools.js';
+import { registerSessionObserve } from './tools/session-observe.js';
 import { registerSessionComplete } from './tools/session-complete.js';
 import { registerDetectPII } from './tools/detect-pii.js';
 import { registerSanitizeText } from './tools/sanitize-text.js';
@@ -27,6 +28,7 @@ export function createMcpServer(): McpServer {
   registerSessionStart(server);
   registerSessionStep(server);
   registerSessionTools(server);
+  registerSessionObserve(server);
   registerSessionComplete(server);
 
   // Utility tools

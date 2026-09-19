@@ -11,7 +11,7 @@
  */
 
 import { createRuntime, type SpearRuntime, type RuntimeOptions } from './core/runtime.js';
-import { getDefaultPolicy, type Policy } from './core/policy.js';
+import { getDefaultPolicy } from './core/policy.js';
 
 export { createRuntime, SpearRuntime } from './core/runtime.js';
 export type {
@@ -30,6 +30,7 @@ export type {
   StepResult,
   ToolBatchResult,
   SessionCompletionResult,
+  ObservationResult,
 } from './core/session.js';
 
 export {
@@ -61,14 +62,13 @@ export const VERSION = '0.1.1';
  */
 export function quick(
   _policyName = 'balanced',
-  options: Partial<{
-    mode: 'shadow' | 'enforce';
-    sidecarUrl: string | null;
-    budgetMs: number;
-    enableLogging: boolean;
-    policy: Policy;
-  }> = {}
+  options: Partial<RuntimeOptions> = {}
 ): SpearRuntime {
   const policy = options.policy || getDefaultPolicy();
   return createRuntime({ ...options, policy } as RuntimeOptions);
 }
+
+export { guardedFetch, inspectOutboundRequest } from './core/egress.js';
+export type { OutboundRequest, EgressCheckResult } from './core/egress.js';
+export { scanSecrets, containsSecrets, redactSecrets } from './core/secrets.js';
+export type { ToolApprovalVerifier } from './gates/tool_mediator.js';

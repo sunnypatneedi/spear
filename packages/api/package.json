@@ -12,7 +12,8 @@
   "scripts": {
     "build": "tsc --project tsconfig.json",
     "typecheck": "tsc --project tsconfig.json --noEmit",
-    "start": "node dist/index.js"
+    "start": "node dist/index.js",
+    "test": "node --test tests/*.test.mjs"
   },
   "dependencies": {
     "@spear-secure/core": "workspace:*"

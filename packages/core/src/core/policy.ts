@@ -59,9 +59,103 @@ const toolsSchema = z.object({
     allow: z.array(z.string()).default([]),
     deny: z.array(z.string()).default([]),
     max_calls: z.number().int().positive().default(3),
-    max_depth: z.number().int().positive().default(2)
-  }).default({ allow: [], deny: [], max_calls: 3, max_depth: 2 })
-}).default({ rbac: { allow: [], deny: [], max_calls: 3, max_depth: 2 } });
+    max_depth: z.number().int().positive().default(2),
+
+    /** Tool name patterns that require an approval verifier in enforce mode. */
+    require_approval: z.array(z.string()).default([]),
+
+    /** Shadow logs approval violations; enforce blocks them. */
+    approval_mode: z.enum(['shadow', 'enforce']).default('shadow'),
+
+    /** Detect shell/template/metadata payloads in tool arguments. */
+    unsafe_payload_mode: z.enum(['shadow', 'enforce']).default('shadow')
+  }).default({
+    allow: [],
+    deny: [],
+    max_calls: 3,
+    max_depth: 2,
+    require_approval: [],
+    approval_mode: 'shadow',
+    unsafe_payload_mode: 'shadow'
+  })
+}).default({
+  rbac: {
+    allow: [],
+    deny: [],
+    max_calls: 3,
+    max_depth: 2,
+    require_approval: [],
+    approval_mode: 'shadow',
+    unsafe_payload_mode: 'shadow'
+  }
+});
+
+/**
+ * Agent-loop controls. These are circuit breakers, not a substitute for a
+ * real sandbox: they limit how far an agent can go and make long-horizon
+ * behavior observable.
+ */
+const agentSchema = z.object({
+  enabled: z.boolean().default(true),
+  max_steps: z.number().int().positive().default(32),
+  max_duration_ms: z.number().int().positive().default(900_000),
+  max_tool_calls: z.number().int().positive().default(100),
+  max_consecutive_same_tool: z.number().int().positive().default(5),
+  circuit_breaker_on_taint: z.boolean().default(true)
+}).default({
+  enabled: true,
+  max_steps: 32,
+  max_duration_ms: 900_000,
+  max_tool_calls: 100,
+  max_consecutive_same_tool: 5,
+  circuit_breaker_on_taint: true
+});
+
+/** Network boundary controls for tools and guardedFetch. */
+const egressSchema = z.object({
+  enabled: z.boolean().default(true),
+  allow_schemes: z.array(z.string()).default(['https']),
+  /** Empty means any public host, subject to deny/private checks. */
+  allowed_hosts: z.array(z.string()).default([]),
+  denied_hosts: z.array(z.string()).default([
+    'localhost',
+    '127.0.0.1',
+    '0.0.0.0',
+    '::1',
+    '169.254.169.254',
+    'metadata.google.internal',
+    'metadata.google',
+    '100.100.100.200'
+  ]),
+  suspicious_hosts: z.array(z.string()).default([]),
+  block_private_networks: z.boolean().default(true),
+  block_credentials_in_url: z.boolean().default(true),
+  block_untrusted_transmit: z.boolean().default(true),
+  scan_secrets: z.boolean().default(true),
+  allow_redirects: z.boolean().default(false),
+  max_url_length: z.number().int().positive().default(2048)
+}).default({
+  enabled: true,
+  allow_schemes: ['https'],
+  allowed_hosts: [],
+  denied_hosts: [
+    'localhost',
+    '127.0.0.1',
+    '0.0.0.0',
+    '::1',
+    '169.254.169.254',
+    'metadata.google.internal',
+    'metadata.google',
+    '100.100.100.200'
+  ],
+  suspicious_hosts: [],
+  block_private_networks: true,
+  block_credentials_in_url: true,
+  block_untrusted_transmit: true,
+  scan_secrets: true,
+  allow_redirects: false,
+  max_url_length: 2048
+});
 
 /**
  * Telemetry and attack pattern discovery configuration
@@ -187,7 +281,11 @@ export const policySchema = z.object({
   input_rules: inputRulesSchema,
   output_rules: outputRulesSchema,
   tools: toolsSchema,
+  agent: agentSchema,
+  egress: egressSchema,
   mode: z.enum(['shadow', 'enforce']).default('shadow'),
+  /** If true, unexpected gate errors block instead of failing open. */
+  fail_closed: z.boolean().default(false),
   latency_budget_ms: z.number().int().positive().default(350),
   sidecar_budget_ms: z.number().int().positive().default(30),
   refusal_phrases: z.array(z.string()).default([
@@ -365,6 +463,8 @@ export function mergePolicy(base: Policy, override: Partial<Policy>): Policy {
         ...override.tools?.rbac
       }
     },
+    agent: { ...base.agent, ...override.agent },
+    egress: { ...base.egress, ...override.egress },
     provenance: {
       ...base.provenance,
       ...override.provenance,
@@ -408,4 +508,3 @@ export function mergePolicy(base: Policy, override: Partial<Policy>): Policy {
 
   return policySchema.parse(merged);
 }
-

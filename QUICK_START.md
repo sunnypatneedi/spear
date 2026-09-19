@@ -68,7 +68,7 @@ if (!s1.allowed) throw new Error(s1.reason);
 // Parallel tool calls
 const { allowed, blocked } = await session.tools(llmResponse.tool_calls);
 const results = await Promise.all(allowed.map(executeTool));
-session.observe(results, { source: 'external' });
+await session.observe(results, { source: 'external' });
 
 // Final output gate (checks canary from step 1)
 const final = await session.complete(llmFinalOutput);

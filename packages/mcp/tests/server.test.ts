@@ -14,7 +14,7 @@ beforeAll(async () => {
 });
 
 describe('server registration', () => {
-  it('registers all 10 tools', async () => {
+  it('registers all security tools', async () => {
     const { tools } = await client.listTools();
     const toolNames = tools.map(t => t.name).sort();
     expect(toolNames).toEqual([
@@ -25,6 +25,7 @@ describe('server registration', () => {
       'spear_pre',
       'spear_sanitize_text',
       'spear_session_complete',
+      'spear_session_observe',
       'spear_session_start',
       'spear_session_step',
       'spear_session_tools',

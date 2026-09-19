@@ -60,10 +60,16 @@ export class SpearCallbackHandler {
   async handleLLMEnd(output: { generations?: Array<Array<{ text?: string }>> }): Promise<void> {
     const text = output.generations?.flat().map(g => g.text ?? '').join('\n') ?? '';
     if (!text) return;
-    const result = await this.session.complete(text);
+    // An LLM completion can be an intermediate agent step. Keep the session open.
+    const result = await this.runtime.post({ output: text }, { sessionId: this.session.id });
     if (!result.allowed && this.mode === 'enforce') {
       throw new Error(result.reason ?? 'Spear blocked LLM output');
     }
+  }
+
+  /** Release session state once the application has finished the agent run. */
+  close(): void {
+    this.session.close();
   }
 
   /**
@@ -83,7 +89,8 @@ export class SpearCallbackHandler {
   /**
    * LangChain `handleToolEnd` — observe tool output as external data.
    */
-  handleToolEnd(output: unknown): void {
-    this.session.observe([output], { source: 'external' });
+  async handleToolEnd(output: unknown): Promise<void> {
+    const result = await this.session.observe([output], { source: 'external' });
+    if (!result.accepted) throw new Error(result.reason ?? 'Spear blocked tool output');
   }
 }
