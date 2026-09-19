@@ -1,0 +1,296 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "SPEAR \u00b7 safety checks at every AI step",
+    "quality_profile": "showcase",
+    "locale": "en",
+    "viewBox": [
+      1112,
+      592
+    ],
+    "repository": {
+      "url": "https://github.com/sunnypatneedi/spear",
+      "revision": "ddd7cc4b0735f0b7880bd744de54bba9f772abfe"
+    },
+    "legend": {
+      "entries": {
+        "backend": {
+          "label": "Your application"
+        },
+        "security": {
+          "label": "SPEAR checks"
+        },
+        "external": {
+          "label": "Outside sources"
+        }
+      }
+    }
+  },
+  "components": [
+    {
+      "id": "input",
+      "type": "security",
+      "label": "Check requests",
+      "sublabel": "Spot misleading instructions",
+      "pos": [
+        32.0,
+        88.0
+      ],
+      "size": [
+        192.0,
+        64.0
+      ],
+      "sources": [
+        {
+          "path": "packages/core/src/core/runtime.ts"
+        }
+      ]
+    },
+    {
+      "id": "agent",
+      "type": "backend",
+      "label": "Your AI assistant",
+      "sublabel": "Your app runs each action",
+      "pos": [
+        328.0,
+        88.0
+      ],
+      "size": [
+        192.0,
+        64.0
+      ],
+      "sources": [
+        {
+          "path": "packages/core/src/core/session.ts"
+        }
+      ]
+    },
+    {
+      "id": "output",
+      "type": "security",
+      "label": "Check answers",
+      "sublabel": "Look for private-data leaks",
+      "pos": [
+        624.0,
+        88.0
+      ],
+      "size": [
+        192.0,
+        64.0
+      ],
+      "sources": [
+        {
+          "path": "packages/core/src/gates/output_gate.ts"
+        }
+      ]
+    },
+    {
+      "id": "policy",
+      "type": "security",
+      "label": "Your safety rules",
+      "sublabel": "Observe, adjust, then block",
+      "pos": [
+        32.0,
+        276.0
+      ],
+      "size": [
+        192.0,
+        64.0
+      ],
+      "sources": [
+        {
+          "path": "packages/core/src/core/policy.ts"
+        }
+      ]
+    },
+    {
+      "id": "mediator",
+      "type": "security",
+      "label": "Approve actions",
+      "sublabel": "Check permissions + approval",
+      "pos": [
+        328.0,
+        276.0
+      ],
+      "size": [
+        192.0,
+        64.0
+      ],
+      "sources": [
+        {
+          "path": "packages/core/src/gates/tool_mediator.ts"
+        }
+      ]
+    },
+    {
+      "id": "tools",
+      "type": "external",
+      "label": "Apps and information",
+      "sublabel": "Email, search and documents",
+      "pos": [
+        624.0,
+        276.0
+      ],
+      "size": [
+        192.0,
+        64.0
+      ],
+      "sources": [
+        {
+          "path": "packages/core/src/core/session.ts"
+        }
+      ]
+    },
+    {
+      "id": "egress",
+      "type": "security",
+      "label": "Check outgoing data",
+      "sublabel": "Check destinations + secrets",
+      "pos": [
+        888.0,
+        276.0
+      ],
+      "size": [
+        192.0,
+        64.0
+      ],
+      "sources": [
+        {
+          "path": "packages/core/src/core/egress.ts"
+        }
+      ]
+    },
+    {
+      "id": "state",
+      "type": "security",
+      "label": "Track ongoing risk",
+      "sublabel": "Remember risks + usage limits",
+      "pos": [
+        328.0,
+        472.0
+      ],
+      "size": [
+        192.0,
+        64.0
+      ],
+      "sources": [
+        {
+          "path": "packages/core/src/core/session.ts"
+        }
+      ]
+    },
+    {
+      "id": "observe",
+      "type": "security",
+      "label": "Check incoming results",
+      "sublabel": "Scan outside content",
+      "pos": [
+        624.0,
+        472.0
+      ],
+      "size": [
+        192.0,
+        64.0
+      ],
+      "sources": [
+        {
+          "path": "packages/core/src/core/session.ts"
+        }
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "input-agent",
+      "from": "input",
+      "to": "agent",
+      "label": "checked input",
+      "variant": "emphasis"
+    },
+    {
+      "id": "agent-output",
+      "from": "agent",
+      "to": "output",
+      "label": "final answer",
+      "variant": "emphasis"
+    },
+    {
+      "id": "policy-input",
+      "from": "policy",
+      "to": "input",
+      "label": "apply rules",
+      "variant": "dashed"
+    },
+    {
+      "id": "agent-mediator",
+      "from": "agent",
+      "to": "mediator",
+      "label": "proposed action",
+      "variant": "security",
+      "labelDy": 72.0
+    },
+    {
+      "id": "mediator-tools",
+      "from": "mediator",
+      "to": "tools",
+      "label": "if allowed",
+      "variant": "emphasis"
+    },
+    {
+      "id": "tools-egress",
+      "from": "tools",
+      "to": "egress",
+      "label": "opt-in",
+      "variant": "security"
+    },
+    {
+      "id": "tools-observe",
+      "from": "tools",
+      "to": "observe",
+      "label": "results",
+      "variant": "security",
+      "labelDy": 72.0
+    },
+    {
+      "id": "observe-state",
+      "from": "observe",
+      "to": "state",
+      "label": "remember risk",
+      "variant": "security"
+    },
+    {
+      "id": "state-mediator",
+      "from": "state",
+      "to": "mediator",
+      "label": "stop risky actions",
+      "variant": "security"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Checks beyond the chat",
+      "items": [
+        "Check requests, actions, outside information and answers.",
+        "Your app must connect the checks and follow their decisions."
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Remember risk across steps",
+      "items": [
+        "Track suspicious activity and limits throughout a task.",
+        "Your rules decide which attack patterns to look for."
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "You stay in control",
+      "items": [
+        "Your app supplies trusted permissions and approvals.",
+        "Keep separate protection for running code and network access."
+      ]
+    }
+  ]
+}
