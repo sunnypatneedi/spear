@@ -1,0 +1,283 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "SPEAR \u00b7 security across the agent loop",
+    "quality_profile": "showcase",
+    "locale": "en",
+    "viewBox": [
+      1112,
+      592
+    ],
+    "repository": {
+      "url": "https://github.com/sunnypatneedi/spear",
+      "revision": "ddd7cc4b0735f0b7880bd744de54bba9f772abfe"
+    }
+  },
+  "components": [
+    {
+      "id": "input",
+      "type": "security",
+      "label": "Input gates",
+      "sublabel": "Injection + role hierarchy",
+      "pos": [
+        32.0,
+        88.0
+      ],
+      "size": [
+        192.0,
+        64.0
+      ],
+      "sources": [
+        {
+          "path": "packages/core/src/core/runtime.ts"
+        }
+      ]
+    },
+    {
+      "id": "agent",
+      "type": "backend",
+      "label": "Your agent / LLM",
+      "sublabel": "Application owns execution",
+      "pos": [
+        328.0,
+        88.0
+      ],
+      "size": [
+        192.0,
+        64.0
+      ],
+      "sources": [
+        {
+          "path": "packages/core/src/core/session.ts"
+        }
+      ]
+    },
+    {
+      "id": "output",
+      "type": "security",
+      "label": "OutputGate",
+      "sublabel": "Canary + PII checks",
+      "pos": [
+        624.0,
+        88.0
+      ],
+      "size": [
+        192.0,
+        64.0
+      ],
+      "sources": [
+        {
+          "path": "packages/core/src/gates/output_gate.ts"
+        }
+      ]
+    },
+    {
+      "id": "policy",
+      "type": "security",
+      "label": "YAML policy",
+      "sublabel": "Shadow \u2192 tune \u2192 enforce",
+      "pos": [
+        32.0,
+        276.0
+      ],
+      "size": [
+        192.0,
+        64.0
+      ],
+      "sources": [
+        {
+          "path": "packages/core/src/core/policy.ts"
+        }
+      ]
+    },
+    {
+      "id": "mediator",
+      "type": "security",
+      "label": "ToolMediator",
+      "sublabel": "RBAC \u00b7 provenance \u00b7 approvals",
+      "pos": [
+        328.0,
+        276.0
+      ],
+      "size": [
+        192.0,
+        64.0
+      ],
+      "sources": [
+        {
+          "path": "packages/core/src/gates/tool_mediator.ts"
+        }
+      ]
+    },
+    {
+      "id": "tools",
+      "type": "external",
+      "label": "Your tools / retrieval",
+      "sublabel": "APIs \u00b7 RAG \u00b7 external content",
+      "pos": [
+        624.0,
+        276.0
+      ],
+      "size": [
+        192.0,
+        64.0
+      ],
+      "sources": [
+        {
+          "path": "packages/core/src/core/session.ts"
+        }
+      ]
+    },
+    {
+      "id": "egress",
+      "type": "security",
+      "label": "guardedFetch()",
+      "sublabel": "URL + secret egress checks",
+      "pos": [
+        888.0,
+        276.0
+      ],
+      "size": [
+        192.0,
+        64.0
+      ],
+      "sources": [
+        {
+          "path": "packages/core/src/core/egress.ts"
+        }
+      ]
+    },
+    {
+      "id": "state",
+      "type": "security",
+      "label": "Session memory",
+      "sublabel": "Budgets \u00b7 taint \u00b7 sequences",
+      "pos": [
+        328.0,
+        472.0
+      ],
+      "size": [
+        192.0,
+        64.0
+      ],
+      "sources": [
+        {
+          "path": "packages/core/src/core/session.ts"
+        }
+      ]
+    },
+    {
+      "id": "observe",
+      "type": "security",
+      "label": "observe()",
+      "sublabel": "Scan results before reuse",
+      "pos": [
+        624.0,
+        472.0
+      ],
+      "size": [
+        192.0,
+        64.0
+      ],
+      "sources": [
+        {
+          "path": "packages/core/src/core/session.ts"
+        }
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "input-agent",
+      "from": "input",
+      "to": "agent",
+      "label": "step()",
+      "variant": "emphasis"
+    },
+    {
+      "id": "agent-output",
+      "from": "agent",
+      "to": "output",
+      "label": "complete()",
+      "variant": "emphasis"
+    },
+    {
+      "id": "policy-input",
+      "from": "policy",
+      "to": "input",
+      "label": "configure",
+      "variant": "dashed"
+    },
+    {
+      "id": "agent-mediator",
+      "from": "agent",
+      "to": "mediator",
+      "label": "tools()",
+      "variant": "security",
+      "labelDy": 72.0
+    },
+    {
+      "id": "mediator-tools",
+      "from": "mediator",
+      "to": "tools",
+      "label": "if allowed",
+      "variant": "emphasis"
+    },
+    {
+      "id": "tools-egress",
+      "from": "tools",
+      "to": "egress",
+      "label": "HTTP opt-in",
+      "variant": "security"
+    },
+    {
+      "id": "tools-observe",
+      "from": "tools",
+      "to": "observe",
+      "label": "results",
+      "variant": "security",
+      "labelDy": 72.0
+    },
+    {
+      "id": "observe-state",
+      "from": "observe",
+      "to": "state",
+      "label": "record risk",
+      "variant": "security"
+    },
+    {
+      "id": "state-mediator",
+      "from": "state",
+      "to": "mediator",
+      "label": "circuit breaker",
+      "variant": "security"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Beyond single-message filtering",
+      "items": [
+        "Input, tool selection, retrieved content and output checks.",
+        "The application must route calls and honor verdicts."
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "State across the whole run",
+      "items": [
+        "Persistent canary, budgets and taint across steps.",
+        "Emergent sequence detection is policy-dependent."
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Explicit trust boundaries",
+      "items": [
+        "App-owned provenance and server-side approvals.",
+        "Egress wrappers complement sandbox / network controls."
+      ]
+    }
+  ]
+}

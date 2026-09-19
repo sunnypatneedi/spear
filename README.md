@@ -1,6 +1,19 @@
 # Spear
 
 **Defense-in-depth security middleware for LLM I/O pipelines.**
+
+![SPEAR architecture: input and output gates surround your agent; tool mediation, result observation, session memory and optional guarded HTTP requests protect the tool loop.](docs/architecture/spear.png)
+
+SPEAR combines **LLM I/O checks**, **provenance-aware tool mediation**, and
+**stateful agent controls** in an application-integrated runtime. Session budgets,
+result scanning, persistent canaries and policy-dependent attack-sequence detection
+extend protection across steps. YAML policies support shadow and enforce modes.
+Your application owns execution and must honor SPEAR's verdicts.
+
+[Architecture and trust boundaries](docs/architecture/README.md) ·
+[Archify source](docs/architecture/spear.architecture.json) ·
+[Interactive diagram (download and open)](docs/architecture/spear.html)
+
 ```bash
 npm install @spear-secure/core
 ```
@@ -160,13 +173,14 @@ while (true) {
 
 ### Why session() is different from calling pre() in a loop
 
-| | Calling `pre()` per iteration | `session.step()` |
-|--|-------------------------------|-----------------|
-| Canary | New canary per step — exfil across steps undetectable | **Single canary across all steps** |
-| Risk score | Isolated per step | **Accumulated peak across session** |
-| Tool batch | Singular `mediateToolCall()` | **`tools([A,B,C])` checks all at once** |
-| Provenance | Resets each call | **Persists taint records across steps** |
-| Composed attacks | Each call looks allowed | **Emergent defense blocks collect-then-exfil / goal hijack** |
+| | Runtime calls with a stable `sessionId` | `SpearSession` |
+|--|-----------------------------------------|----------------|
+| Canary | Retained by the runtime, subject to TTL/capacity | Shared across steps through the runtime |
+| Tool context | Runtime retains call counts and recorded provenance | Adds coordinated tool batches and session budgets |
+| Risk | Individual gate results | Accumulates peak session risk |
+| Tool/RAG results | Application records provenance explicitly | `observe()` scans results and records taint |
+| Cross-step controls | Application coordinates the lifecycle | Serializes operations; enforces budgets and taint circuit breakers; tracks attack sequences when enabled |
+
 
 ---
 
@@ -204,42 +218,15 @@ llm = ChatOpenAI(callbacks=[SpearCallbackHandler(
 
 ## How it works
 
-Every request flows through four gates in sequence:
+The diagram above shows two connected paths. `session.step()` calls the input
+and instruction gates before your application invokes the model. Final output
+passes through `session.complete()` and the output gate. During the agent loop,
+`session.tools()` mediates proposed tool calls; the application executes allowed
+calls and awaits `session.observe()` before reusing their results.
 
-```
-User Input
-    │
-    ▼
-┌─────────────┐
-│  InputGate  │  Unicode normalization, 7-class injection detection
-└─────────────┘
-    │ allowed
-    ▼
-┌──────────────────────┐
-│  InstructionShield   │  Role hierarchy enforcement, system prompt protection
-└──────────────────────┘
-    │ allowed
-    ▼
-  [Your LLM call]
-    │
-    ▼
-┌────────────┐
-│ OutputGate │  Canary exfiltration detection, PII masking, encoded leak scanning
-└────────────┘
-    │
-    ▼
- Safe Response
-
-          ┌────────────────┐
-          │  ToolMediator  │  For agentic pipelines: capability-based tool RBAC,
-          │                │  CaMeL-inspired data provenance enforcement
-          └────────────────┘
-
-          ┌─────────────────────┐
-          │  Emergent defense   │  Session-level: dangerous tool compositions,
-          │                     │  collect-then-exfil, mid-loop goal hijack
-          └─────────────────────┘
-```
+`guardedFetch()` is an opt-in HTTP wrapper. It only inspects requests routed
+through it. YAML policy configures the runtime's gates and session controls;
+the diagram's policy arrow represents that shared configuration.
 
 **Shadow mode** logs violations without blocking. **Enforce mode** blocks. You start in shadow, observe, tune, then enforce. No guessing.
 
