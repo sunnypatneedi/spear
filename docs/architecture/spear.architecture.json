@@ -2,7 +2,7 @@
   "schema_version": 1,
   "diagram_type": "architecture",
   "meta": {
-    "title": "SPEAR \u00b7 security across the agent loop",
+    "title": "SPEAR \u00b7 safety checks at every AI step",
     "quality_profile": "showcase",
     "locale": "en",
     "viewBox": [
@@ -12,14 +12,27 @@
     "repository": {
       "url": "https://github.com/sunnypatneedi/spear",
       "revision": "ddd7cc4b0735f0b7880bd744de54bba9f772abfe"
+    },
+    "legend": {
+      "entries": {
+        "backend": {
+          "label": "Your application"
+        },
+        "security": {
+          "label": "SPEAR checks"
+        },
+        "external": {
+          "label": "Outside sources"
+        }
+      }
     }
   },
   "components": [
     {
       "id": "input",
       "type": "security",
-      "label": "Input gates",
-      "sublabel": "Injection + role hierarchy",
+      "label": "Check requests",
+      "sublabel": "Spot misleading instructions",
       "pos": [
         32.0,
         88.0
@@ -37,8 +50,8 @@
     {
       "id": "agent",
       "type": "backend",
-      "label": "Your agent / LLM",
-      "sublabel": "Application owns execution",
+      "label": "Your AI assistant",
+      "sublabel": "Your app runs each action",
       "pos": [
         328.0,
         88.0
@@ -56,8 +69,8 @@
     {
       "id": "output",
       "type": "security",
-      "label": "OutputGate",
-      "sublabel": "Canary + PII checks",
+      "label": "Check answers",
+      "sublabel": "Look for private-data leaks",
       "pos": [
         624.0,
         88.0
@@ -75,8 +88,8 @@
     {
       "id": "policy",
       "type": "security",
-      "label": "YAML policy",
-      "sublabel": "Shadow \u2192 tune \u2192 enforce",
+      "label": "Your safety rules",
+      "sublabel": "Observe, adjust, then block",
       "pos": [
         32.0,
         276.0
@@ -94,8 +107,8 @@
     {
       "id": "mediator",
       "type": "security",
-      "label": "ToolMediator",
-      "sublabel": "RBAC \u00b7 provenance \u00b7 approvals",
+      "label": "Approve actions",
+      "sublabel": "Check permissions + approval",
       "pos": [
         328.0,
         276.0
@@ -113,8 +126,8 @@
     {
       "id": "tools",
       "type": "external",
-      "label": "Your tools / retrieval",
-      "sublabel": "APIs \u00b7 RAG \u00b7 external content",
+      "label": "Apps and information",
+      "sublabel": "Email, search and documents",
       "pos": [
         624.0,
         276.0
@@ -132,8 +145,8 @@
     {
       "id": "egress",
       "type": "security",
-      "label": "guardedFetch()",
-      "sublabel": "URL + secret egress checks",
+      "label": "Check outgoing data",
+      "sublabel": "Check destinations + secrets",
       "pos": [
         888.0,
         276.0
@@ -151,8 +164,8 @@
     {
       "id": "state",
       "type": "security",
-      "label": "Session memory",
-      "sublabel": "Budgets \u00b7 taint \u00b7 sequences",
+      "label": "Track ongoing risk",
+      "sublabel": "Remember risks + usage limits",
       "pos": [
         328.0,
         472.0
@@ -170,8 +183,8 @@
     {
       "id": "observe",
       "type": "security",
-      "label": "observe()",
-      "sublabel": "Scan results before reuse",
+      "label": "Check incoming results",
+      "sublabel": "Scan outside content",
       "pos": [
         624.0,
         472.0
@@ -192,28 +205,28 @@
       "id": "input-agent",
       "from": "input",
       "to": "agent",
-      "label": "step()",
+      "label": "checked input",
       "variant": "emphasis"
     },
     {
       "id": "agent-output",
       "from": "agent",
       "to": "output",
-      "label": "complete()",
+      "label": "final answer",
       "variant": "emphasis"
     },
     {
       "id": "policy-input",
       "from": "policy",
       "to": "input",
-      "label": "configure",
+      "label": "apply rules",
       "variant": "dashed"
     },
     {
       "id": "agent-mediator",
       "from": "agent",
       "to": "mediator",
-      "label": "tools()",
+      "label": "proposed action",
       "variant": "security",
       "labelDy": 72.0
     },
@@ -228,7 +241,7 @@
       "id": "tools-egress",
       "from": "tools",
       "to": "egress",
-      "label": "HTTP opt-in",
+      "label": "opt-in",
       "variant": "security"
     },
     {
@@ -243,40 +256,40 @@
       "id": "observe-state",
       "from": "observe",
       "to": "state",
-      "label": "record risk",
+      "label": "remember risk",
       "variant": "security"
     },
     {
       "id": "state-mediator",
       "from": "state",
       "to": "mediator",
-      "label": "circuit breaker",
+      "label": "stop risky actions",
       "variant": "security"
     }
   ],
   "cards": [
     {
       "dot": "cyan",
-      "title": "Beyond single-message filtering",
+      "title": "Checks beyond the chat",
       "items": [
-        "Input, tool selection, retrieved content and output checks.",
-        "The application must route calls and honor verdicts."
+        "Check requests, actions, outside information and answers.",
+        "Your app must connect the checks and follow their decisions."
       ]
     },
     {
       "dot": "emerald",
-      "title": "State across the whole run",
+      "title": "Remember risk across steps",
       "items": [
-        "Persistent canary, budgets and taint across steps.",
-        "Emergent sequence detection is policy-dependent."
+        "Track suspicious activity and limits throughout a task.",
+        "Your rules decide which attack patterns to look for."
       ]
     },
     {
       "dot": "amber",
-      "title": "Explicit trust boundaries",
+      "title": "You stay in control",
       "items": [
-        "App-owned provenance and server-side approvals.",
-        "Egress wrappers complement sandbox / network controls."
+        "Your app supplies trusted permissions and approvals.",
+        "Keep separate protection for running code and network access."
       ]
     }
   ]

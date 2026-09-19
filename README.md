@@ -2,7 +2,7 @@
 
 **Defense-in-depth security middleware for LLM I/O pipelines.**
 
-![SPEAR architecture: input and output gates surround your agent; tool mediation, result observation, session memory and optional guarded HTTP requests protect the tool loop.](docs/architecture/spear.png)
+![SPEAR checks requests, answers, actions and outside information, tracks risk across steps, and offers optional checks on outgoing data.](docs/architecture/spear.png)
 
 SPEAR combines **LLM I/O checks**, **provenance-aware tool mediation**, and
 **stateful agent controls** in an application-integrated runtime. Session budgets,

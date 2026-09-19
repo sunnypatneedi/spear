@@ -21,6 +21,23 @@ not a deployment topology or a claim of complete attack prevention.
 These are architectural characteristics, not a benchmark or a claim that no
 other security product has comparable controls.
 
+## Plain-language labels and code names
+
+The diagram uses everyday language. Developers can use this table to find the
+matching implementation; the interactive diagram also retains source links.
+
+| Diagram label | Implementation |
+| --- | --- |
+| Check requests | `InputGate` + `InstructionShield`, through `session.step()` |
+| Your AI assistant | Application-owned agent / LLM call |
+| Check answers | `OutputGate`, through `session.complete()` |
+| Your safety rules | YAML policy; shadow and enforce modes |
+| Approve actions | `ToolMediator`, through `session.tools()` |
+| Apps and information | Application tools, APIs and retrieval |
+| Check outgoing data | Opt-in `guardedFetch()` HTTP wrapper |
+| Track ongoing risk | `SpearSession` budgets, taint and emergent tracker |
+| Check incoming results | `session.observe()` |
+
 ## Read the diagram
 
 1. Your application calls `session.step()` and invokes its chosen LLM only when allowed.
