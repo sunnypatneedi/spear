@@ -123,7 +123,7 @@ export function createApiServer(options: {
           return;
         }
         if (action === 'observe') {
-          json(res, 200, session.observe(body.results as unknown[] ?? [], {
+          json(res, 200, await session.observe(body.results as unknown[] ?? [], {
             source: String(body.source ?? 'external'),
           }));
           return;

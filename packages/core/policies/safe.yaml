@@ -61,6 +61,45 @@ tools:
     deny: []
     max_calls: 2      # Stricter limits
     max_depth: 1
+    require_approval:
+      - '(?i)(^|[._-])(send|delete|remove|write|update|upload|publish|deploy|exec|shell|run|payment|transfer|grant|rotate|install|credential|secret)'
+    approval_mode: enforce
+    unsafe_payload_mode: enforce
+
+agent:
+  enabled: true
+  max_steps: 16
+  max_duration_ms: 300000
+  max_tool_calls: 40
+  max_consecutive_same_tool: 3
+  circuit_breaker_on_taint: true
+
+egress:
+  enabled: true
+  allow_schemes: [https]
+  allowed_hosts: []
+  denied_hosts:
+    - localhost
+    - 127.0.0.1
+    - 0.0.0.0
+    - ::1
+    - 169.254.169.254
+    - metadata.google.internal
+    - metadata.google
+    - 100.100.100.200
+  suspicious_hosts:
+    - requestbin.com
+    - webhook.site
+    - pastebin.com
+    - transfer.sh
+    - file.io
+    - 0x0.st
+  block_private_networks: true
+  block_credentials_in_url: true
+  block_untrusted_transmit: true
+  scan_secrets: true
+  allow_redirects: false
+  max_url_length: 2048
 
 mode: enforce  # Actively block attacks
 
@@ -76,9 +115,9 @@ emergent:
 
 latency_budget_ms: 400  # Slightly higher budget for safety checks
 sidecar_budget_ms: 40
+fail_closed: true
 
 refusal_phrases:
   - "I can't share internal instructions or system prompts."
   - "I'm not able to discuss my internal configuration."
   - "That request appears to be attempting to access restricted information."
-

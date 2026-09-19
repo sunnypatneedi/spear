@@ -9,6 +9,14 @@ const inputSchema = {
     name: z.string(),
     arguments: z.record(z.unknown()),
     id: z.string().optional(),
+    approvalToken: z.string().optional(),
+    outboundRequest: z.object({
+      url: z.string(),
+      method: z.string().optional(),
+      redirect: z.enum(['follow', 'error', 'manual']).optional(),
+      headers: z.record(z.union([z.string(), z.number(), z.boolean()])).optional(),
+      body: z.unknown().optional(),
+    }).optional(),
   })),
 };
 
@@ -25,8 +33,20 @@ export function registerSessionTools(server: McpServer): void {
         }
         const result = await session.tools(toolCalls);
         return jsonResponse({
-          allowed: result.allowed.map(r => ({ allowed: r.allowed, reason: r.reason })),
-          blocked: result.blocked.map(r => ({ allowed: r.allowed, reason: r.reason })),
+          allowed: result.allowed.map(r => ({
+            allowed: r.allowed,
+            reason: r.reason,
+            requiresApproval: r.requiresApproval,
+            egressViolations: r.egressViolations,
+            payloadViolations: r.payloadViolations,
+          })),
+          blocked: result.blocked.map(r => ({
+            allowed: r.allowed,
+            reason: r.reason,
+            requiresApproval: r.requiresApproval,
+            egressViolations: r.egressViolations,
+            payloadViolations: r.payloadViolations,
+          })),
           total: result.total,
           emergent: result.emergent,
         });

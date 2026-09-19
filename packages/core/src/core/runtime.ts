@@ -20,9 +20,11 @@ import {
   type ToolCall,
   type MediationContext,
   type ToolMediatorResult,
-  type CapabilityViolation
+  type CapabilityViolation,
+  type ToolApprovalVerifier
 } from '../gates/tool_mediator.js';
 import { CanaryManager, containsCanary } from './canary.js';
+import { guardedFetch as guardedFetchRequest } from './egress.js';
 import type { Provenance, ProvenanceLevel, ProvenancePolicy } from './provenance.js';
 import { SpearSession, type SessionOptions } from './session.js';
 import { PolicyRegistry } from './policy-registry.js';
@@ -39,6 +41,8 @@ export interface RuntimeOptions {
   sidecarApiKey?: string | null;
   budgetMs?: number;
   enableLogging?: boolean;
+  /** Server-controlled verifier for high-impact tool actions. */
+  approvalVerifier?: ToolApprovalVerifier;
   /** Optional exporter (OpenTelemetry or any sink). Core does not depend on OTel. */
   telemetryExporter?: TelemetryExporter;
 }
@@ -143,6 +147,8 @@ export class SpearRuntime {
   private sidecarOptions: SidecarOptions;
   private canaryManager: CanaryManager;
   private enableLogging: boolean;
+  private approvalVerifier?: ToolApprovalVerifier;
+  private toolOperations = new Map<string, Promise<void>>();
   private telemetry: TelemetryEvent[] = [];
   private toolContexts: Map<string, { ctx: MediationContext; createdAt: number }> = new Map();
   private readonly contextTtlMs = 30 * 60 * 1000;
@@ -173,6 +179,11 @@ export class SpearRuntime {
     this.enableLogging = options.enableLogging !== false;
     this.rateLimiter = new RateLimiter(this.policy.rate_limit);
     this.telemetryExporter = options.telemetryExporter;
+    this.approvalVerifier = options.approvalVerifier;
+  }
+
+  private shouldFailClosed(): boolean {
+    return this.mode === 'enforce' || this.policy.fail_closed;
   }
 
   /**
@@ -328,7 +339,7 @@ export class SpearRuntime {
         userId: context.userId
       });
 
-      if (this.mode === 'enforce') {
+      if (this.shouldFailClosed()) {
         return {
           allowed: false,
           reason: `Security gate internal error`,
@@ -408,7 +419,7 @@ export class SpearRuntime {
         userId: context.userId
       });
 
-      if (this.mode === 'enforce') {
+      if (this.shouldFailClosed()) {
         return {
           allowed: false,
           reason: 'Security gate internal error',
@@ -431,7 +442,19 @@ export class SpearRuntime {
    * @param sessionId Session identifier for context tracking
    * @returns Mediation result
    */
-  async mediateToolCall(toolCall: ToolCall, sessionId?: string): Promise<ToolMediatorResult> {
+  mediateToolCall(toolCall: ToolCall, sessionId?: string): Promise<ToolMediatorResult> {
+    const key = sessionId || 'default';
+    const result = (this.toolOperations.get(key) || Promise.resolve())
+      .then(() => this.mediateToolCallInternal(toolCall, sessionId));
+    const tail = result.then(() => undefined, () => undefined);
+    this.toolOperations.set(key, tail);
+    void tail.then(() => {
+      if (this.toolOperations.get(key) === tail) this.toolOperations.delete(key);
+    });
+    return result;
+  }
+
+  private async mediateToolCallInternal(toolCall: ToolCall, sessionId?: string): Promise<ToolMediatorResult> {
     const contextKey = sessionId || 'default';
     this.evictToolContexts();
 
@@ -446,6 +469,7 @@ export class SpearRuntime {
         this.toolContexts.set(contextKey, { ctx: context, createdAt: entry?.createdAt ?? Date.now() });
       }
 
+      context = { ...context, enforcementMode: this.mode, approvalVerifier: this.approvalVerifier };
       const result = await toolMediator(toolCall, context, this.policy);
       this.toolContexts.set(contextKey, { ctx: result.context, createdAt: entry?.createdAt ?? Date.now() });
 
@@ -479,7 +503,7 @@ export class SpearRuntime {
         reason: `Tool mediation error: ${error instanceof Error ? error.message : String(error)}`,
         sessionId
       });
-      if (this.mode === 'enforce') {
+      if (this.shouldFailClosed()) {
         return {
           allowed: false,
           reason: 'Security gate internal error',
@@ -662,6 +686,52 @@ export class SpearRuntime {
     return this.policy.provenance;
   }
 
+  /** Return the configured long-horizon agent circuit breakers. */
+  getAgentPolicy(): Policy['agent'] {
+    return this.policy.agent;
+  }
+
+  /**
+   * Perform an HTTP request through this runtime's egress policy and mode.
+   *
+   * This method is preferable to passing `getPolicy()` to the standalone
+   * helper because RuntimeOptions.mode may intentionally override policy.mode.
+   */
+  guardedFetch(
+    input: string | URL,
+    init: RequestInit = {},
+    options: { provenance?: Provenance } = {}
+  ): Promise<Response> {
+    return guardedFetchRequest(input, this.policy, init, {
+      mode: this.mode,
+      provenance: options.provenance
+    });
+  }
+
+  /** Record a boundary observation without storing its raw payload. */
+  recordObservation(event: {
+    sessionId?: string;
+    allowed: boolean;
+    reason?: string;
+    score?: number;
+    provenance?: { level?: ProvenanceLevel; source?: string };
+  }): void {
+    this.log({
+      type: event.allowed ? 'input' : 'block',
+      allowed: event.allowed,
+      reason: event.reason,
+      score: event.score,
+      sessionId: event.sessionId,
+      provenance: event.provenance
+    });
+  }
+
+  /** Remove session-scoped canaries and tool state after an agent is done. */
+  closeSession(sessionId: string): void {
+    this.canaryManager.removeSession(sessionId);
+    this.toolContexts.delete(sessionId);
+  }
+
   /**
    * Get all capability violations from recent telemetry
    *
@@ -714,7 +784,7 @@ export class SpearRuntime {
    *   }
    *
    *   const { allowed } = await session.tools(llmResponse.tool_calls);
-   *   session.observe(await executeAll(allowed), { source: 'external' });
+   *   await session.observe(await executeAll(allowed), { source: 'external' });
    *   messages = buildFollowUp(llmResponse, results);
    * }
    * ```

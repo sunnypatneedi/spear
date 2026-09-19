@@ -83,6 +83,10 @@ function compilePatterns(patterns: string[]): RegExp[] {
  */
 function matchesBlockPatterns(content: string, patterns: RegExp[]): { matched: boolean; pattern?: string } {
   for (const pattern of patterns) {
+    // Patterns are compiled with the global flag so their source can be
+    // reported, but RegExp.test() is stateful with /g. Always reset it before
+    // scanning a new message.
+    pattern.lastIndex = 0;
     if (pattern.test(content)) {
       return { matched: true, pattern: pattern.source };
     }
@@ -425,4 +429,3 @@ export async function checkUserMessage(content: string, policy: Policy): Promise
   const result = await inputGate([{ role: 'user', content }], policy);
   return result.allowed;
 }
-

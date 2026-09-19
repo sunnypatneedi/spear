@@ -55,7 +55,7 @@ Spear addresses all three.
 ## Track 1: Library — single-request guard
 
 ```typescript
-import { quick } from '@spear-secure/core';
+import { quick, ProvenanceSource } from '@spear-secure/core';
 
 const spear = quick('balanced');  // 'balanced' | 'safe' | 'permissive'
 
@@ -97,10 +97,11 @@ Single-request `pre/post` breaks in agent loops. A canary embedded in step 1 mus
 `spear.session()` handles all of this:
 
 ```typescript
-import { quick } from '@spear-secure/core';
+import { quick, ProvenanceSource } from '@spear-secure/core';
 
 const spear = quick('balanced', { mode: 'enforce' });
 const session = spear.session({ sessionId: 'agent-001', userId: 'u-42' });
+const userApprovedToolCalls = new Set<string>(); // populated outside the model loop
 
 // --- ReAct loop ---
 let messages = initialMessages;
@@ -116,7 +117,7 @@ while (true) {
   const llmResponse = await openai.chat.completions.create({
     model: 'gpt-4o',
     messages: step.messages,  // sanitized
-    system: `You are a research agent. ${spear.pre.canary}`,
+    system: `You are a research agent. [Internal Reference: ${step.canary ?? ''}]`,
     tools: myTools
   });
 
@@ -133,7 +134,12 @@ while (true) {
     llmResponse.choices[0].message.tool_calls.map(tc => ({
       name: tc.function.name,
       arguments: JSON.parse(tc.function.arguments),
-      id: tc.id
+      id: tc.id,
+      // Only stamp direct user authorization from a server-side check. An
+      // autonomous model choice must remain untrusted and will fail closed.
+      selectionProvenance: userApprovedToolCalls.has(tc.id)
+        ? ProvenanceSource.userInput('authenticated-user-action')
+        : undefined
     }))
   );
 
@@ -145,7 +151,7 @@ while (true) {
   const results = await Promise.all(allowed.map(r => executeTool(r)));
 
   // Tag tool outputs with provenance source (external data = lower trust)
-  session.observe(results, { source: 'external' });
+  await session.observe(results, { source: 'external' });
 
   // Build next step messages
   messages = buildFollowUp(llmResponse, results);
@@ -249,14 +255,44 @@ Model providers filter conversations. They cannot see inside your tool responses
 import { tagValue, ProvenanceSource } from '@spear-secure/core';
 
 // Tag data from external sources as untrusted
-const ragResult = tagValue(fetchedDocument, ProvenanceSource.external('web-search'));
+const ragResult = tagValue(fetchedDocument, ProvenanceSource.webScrape('web-search'));
 
 // ToolMediator checks provenance before allowing tool calls
 const { allowed } = await session.tools([{
   name: 'send_email',
-  arguments: { body: ragResult } // blocked — untrusted source cannot trigger email
+  arguments: { body: ragResult.value },
+  argumentProvenance: { body: ragResult.provenance },
+  // This still requires an approvalVerifier for the high-impact action.
+  selectionProvenance: ProvenanceSource.userInput('authenticated-user-action')
 }]);
 ```
+
+### 4. Long-horizon agent boundaries
+
+The OpenAI–Hugging Face incident showed that an agent can turn a narrow task
+into a multi-day operation across package proxies, public dead drops, data
+loaders, credentials, and internal networks. Spear now adds controls for that
+attack shape:
+
+- session-scoped budgets and repeated-tool circuit breakers;
+- active tainting when tool/RAG results contain injection or secret material;
+- egress inspection for SSRF, cloud metadata, suspicious capture hosts, and
+  secret transmission;
+- tool-payload inspection for indirect injection, metadata probes, staged shell
+  chains, and common code-execution patterns;
+- server-side approval gates for high-impact tools;
+- `guardedFetch()` for application HTTP clients.
+
+```typescript
+const observation = await session.observe(toolResult, { source: 'external' });
+if (!observation.accepted) return 'Result quarantined';
+
+const response = await spear.guardedFetch(url, init);
+```
+
+Spear is an application boundary, not a kernel sandbox. Shell/code-execution
+tools still need container isolation, short-lived scoped credentials, and a
+real network egress policy. See [`docs/emergent-agent-defense.md`](docs/emergent-agent-defense.md).
 
 ### 2. Canary tokens make exfiltration visible
 
@@ -421,8 +457,8 @@ const step = await session.step(messages);
 // Batch parallel tool checks
 const { allowed, blocked } = await session.tools([callA, callB, callC]);
 
-// Tag tool results with provenance source
-session.observe(results, { source: 'external' });
+// Scan and tag tool results with provenance source
+await session.observe(results, { source: 'external' });
 
 // Inspect composed (emergent) findings without a new event
 const snapshot = session.inspect();
@@ -440,7 +476,11 @@ Single tool call mediation with CaMeL capability enforcement.
 
 ```typescript
 const { allowed, reason } = await spear.mediateToolCall(
-  { name: 'send_email', arguments: { to, body } },
+  {
+    name: 'send_email',
+    arguments: { to, body },
+    selectionProvenance: ProvenanceSource.userInput('agent-request')
+  },
   sessionId
 );
 ```
@@ -465,7 +505,7 @@ const result = tokenizePII('Call John at 555-0100', knownEntities);
 ```typescript
 import { tagValue, ProvenanceSource, checkCapabilities } from '@spear-secure/core';
 
-const value = tagValue(externalData, ProvenanceSource.external('rag'));
+const value = tagValue(externalData, ProvenanceSource.webScrape('rag'));
 // value is now tagged — ToolMediator will enforce capability rules on it
 ```
 

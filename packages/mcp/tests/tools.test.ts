@@ -199,3 +199,28 @@ describe('session lifecycle', () => {
     expect(data.error).toContain('not found');
   });
 });
+
+
+describe('spear_session_observe', () => {
+  it('returns scanning results and emergent findings over MCP', async () => {
+    await client.callTool({ name: 'spear_session_start', arguments: { sessionId: 'mcp-observe' } });
+    const token = `hf_${'a'.repeat(24)}`;
+    const result = await client.callTool({
+      name: 'spear_session_observe',
+      arguments: { sessionId: 'mcp-observe', results: [token], source: 'external' },
+    });
+    const data = parseResult(result) as { tainted: boolean; secretCount: number; findings: unknown[] };
+    expect(data.tainted).toBe(true);
+    expect(data.secretCount).toBeGreaterThan(0);
+    expect(Array.isArray(data.findings)).toBe(true);
+    expect(JSON.stringify(result)).not.toContain(token);
+  });
+
+  it('does not let model-supplied observations claim system trust', async () => {
+    const result = await client.callTool({
+      name: 'spear_session_observe',
+      arguments: { sessionId: 'mcp-observe', results: ['data'], source: 'system' },
+    });
+    expect(result.isError).toBe(true);
+  });
+});

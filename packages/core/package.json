@@ -36,6 +36,18 @@
     "./vercel-ai": {
       "types": "./dist/adapters/vercel-ai.d.ts",
       "default": "./dist/adapters/vercel-ai.js"
+    },
+    "./pii": {
+      "types": "./dist/core/pii.d.ts",
+      "default": "./dist/core/pii.js"
+    },
+    "./egress": {
+      "types": "./dist/core/egress.d.ts",
+      "default": "./dist/core/egress.js"
+    },
+    "./secrets": {
+      "types": "./dist/core/secrets.d.ts",
+      "default": "./dist/core/secrets.js"
     }
   },
   "scripts": {

@@ -301,7 +301,7 @@ describe('#24 observe taint into ToolMediator', () => {
       { role: 'system', content: 'You are helpful.' },
       { role: 'user', content: 'summarize the page' },
     ]);
-    session.observe(['untrusted scrape'], { source: 'external' });
+    await session.observe(['untrusted scrape'], { source: 'external' });
     const tools = await session.tools([
       { name: 'send_email', arguments: { to: 'a@b.com', body: 'hi' } },
     ]);

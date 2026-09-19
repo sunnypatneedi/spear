@@ -35,7 +35,8 @@ export type {
   SessionOptions,
   StepResult,
   ToolBatchResult,
-  SessionCompletionResult
+  SessionCompletionResult,
+  ObservationResult
 } from './core/session.js';
 
 // Emergent agent defense — session-level composition checks
@@ -190,7 +191,8 @@ export type {
   MediationContext,
   ToolMediatorResult,
   TaggedArgument,
-  CapabilityViolation
+  CapabilityViolation,
+  ToolApprovalVerifier
 } from './gates/tool_mediator.js';
 
 export {
@@ -216,6 +218,20 @@ export type { SpearCallbackOptions } from './adapters/langchain.js';
 export { withSpear } from './adapters/vercel-ai.js';
 export type { WithSpearOptions, SpearHandlerContext } from './adapters/vercel-ai.js';
 export { base64Decode } from './core/platform.js';
+// Agent boundary controls
+export {
+  inspectOutboundRequest,
+  guardedFetch
+} from './core/egress.js';
+export type { OutboundRequest, EgressCheckResult } from './core/egress.js';
+
+export {
+  scanSecrets,
+  containsSecrets,
+  redactSecrets,
+  stringifyForInspection
+} from './core/secrets.js';
+export type { SecretType, SecretMatch, SecretScanResult } from './core/secrets.js';
 
 /**
  * Package version

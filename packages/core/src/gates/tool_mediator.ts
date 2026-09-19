@@ -34,6 +34,8 @@ import {
   DEFAULT_CAPABILITY_MATRIX,
   buildCapabilityMatrix
 } from '../core/provenance.js';
+import { inspectOutboundRequest, type OutboundRequest } from '../core/egress.js';
+import { stringifyForInspection } from '../core/secrets.js';
 
 /**
  * Tool argument with provenance tracking
@@ -50,6 +52,12 @@ export interface ToolCall {
   name: string;
   arguments: Record<string, unknown>;
   id?: string;
+
+  /** Optional server-side approval material; never copy model output into it. */
+  approvalToken?: string;
+
+  /** Exact outbound request metadata; construct it server-side, not from model JSON. */
+  outboundRequest?: OutboundRequest;
 
   /**
    * Provenance of the tool selection decision
@@ -73,6 +81,12 @@ export interface MediationContext {
   callDepth: number;
   history: ToolCall[];
 
+  /** Effective runtime mode, including a RuntimeOptions override. */
+  enforcementMode?: 'shadow' | 'enforce';
+
+  /** Server-controlled verifier for high-impact tool actions. */
+  approvalVerifier?: ToolApprovalVerifier;
+
   /**
    * Provenance policy for capability enforcement
    */
@@ -88,7 +102,7 @@ export interface MediationContext {
  * Capability violation details
  */
 export interface CapabilityViolation {
-  type: 'tool_selection' | 'argument' | 'minimum_level';
+  type: 'tool_selection' | 'argument' | 'minimum_level' | 'approval' | 'egress' | 'payload';
   capability?: Capability;
   argumentName?: string;
   provenanceLevel: ProvenanceLevel;
@@ -113,7 +127,27 @@ export interface ToolMediatorResult {
    * Was this blocked due to provenance/capability issues?
    */
   provenanceBlocked?: boolean;
+
+  /** True when the tool is high-impact and needs a server-side approval. */
+  requiresApproval?: boolean;
+
+  /** Egress findings attached to this tool call, if any. */
+  egressViolations?: string[];
+
+  /** Unsafe payload findings attached to this tool call, if any. */
+  payloadViolations?: string[];
 }
+
+/**
+ * Server-side approval hook for high-impact tool calls.
+ *
+ * The model must not be allowed to manufacture approval. The application
+ * should issue approval material only after its own user or policy check.
+ */
+export type ToolApprovalVerifier = (
+  toolCall: ToolCall,
+  sessionId?: string
+) => boolean | Promise<boolean>;
 
 /**
  * Tool schema registry for argument validation
@@ -241,6 +275,175 @@ function checkRecursion(toolCall: ToolCall, context: MediationContext): { allowe
   return { allowed: true };
 }
 
+function isEnforceMode(context: MediationContext, policy: Policy): boolean {
+  return (context.enforcementMode || policy.mode) === 'enforce';
+}
+
+function matchesToolPattern(toolName: string, patterns: string[]): boolean {
+  return patterns.some(pattern => {
+    try {
+      const normalized = pattern.startsWith('(?i)') ? pattern.slice(4) : pattern;
+      return new RegExp(normalized, pattern.startsWith('(?i)') ? 'i' : undefined).test(toolName);
+    } catch {
+      throw new Error('Invalid approval tool pattern');
+    }
+  });
+}
+
+async function checkApproval(
+  toolCall: ToolCall,
+  context: MediationContext,
+  policy: Policy
+): Promise<{ allowed: boolean; required: boolean; violation?: CapabilityViolation }> {
+  const required = matchesToolPattern(toolCall.name, policy.tools.rbac.require_approval);
+  if (!required) return { allowed: true, required: false };
+
+  let approved = false;
+  if (context.approvalVerifier) {
+    try {
+      approved = (await context.approvalVerifier(toolCall, context.sessionId)) === true;
+    } catch {
+      // An approval service outage must not silently turn a privileged action
+      // into an approved action.
+      return {
+        allowed: false,
+        required: true,
+        violation: {
+          type: 'approval',
+          provenanceLevel: 'untrusted',
+          message: `Approval verifier unavailable for tool '${toolCall.name}'`
+        }
+      };
+    }
+  }
+
+  if (approved) return { allowed: true, required: true };
+
+  const violation: CapabilityViolation = {
+    type: 'approval',
+    provenanceLevel: 'untrusted',
+    message: `Tool '${toolCall.name}' requires server-side human/policy approval`
+  };
+
+  return {
+    allowed: policy.tools.rbac.approval_mode !== 'enforce' && !isEnforceMode(context, policy),
+    required: true,
+    violation
+  };
+}
+
+function findOutboundRequests(toolCall: ToolCall): OutboundRequest[] {
+  const requests: OutboundRequest[] = [];
+  if (toolCall.outboundRequest) requests.push(toolCall.outboundRequest);
+
+  const urlKeys = new Set([
+    'url', 'uri', 'endpoint', 'destination', 'callback', 'webhook', 'target', 'host'
+  ]);
+
+  const visit = (value: unknown, key?: string, depth = 0): void => {
+    if (depth > 32) throw new Error('Outbound arguments exceed inspection depth');
+    if (value === null || value === undefined) return;
+    if (typeof value === 'string') {
+      const looksLikeUrl = /^[a-z][a-z0-9+.-]*:/i.test(value);
+      if (looksLikeUrl && (!key || urlKeys.has(key.toLowerCase()))) {
+        requests.push({ url: value });
+      }
+      return;
+    }
+    if (Array.isArray(value)) {
+      value.forEach(item => visit(item, key, depth + 1));
+      return;
+    }
+    if (typeof value === 'object') {
+      const record = value as Record<string, unknown>;
+      for (const urlKey of ['url', 'uri', 'endpoint', 'destination', 'callback', 'webhook']) {
+        const candidate = record[urlKey];
+        if (typeof candidate === 'string' && /^[a-z][a-z0-9+.-]*:/i.test(candidate)) {
+          const headers = record.headers && typeof record.headers === 'object'
+            ? record.headers as Record<string, string | number | boolean>
+            : undefined;
+          requests.push({
+            url: candidate,
+            method: typeof record.method === 'string' ? record.method : undefined,
+            redirect: record.redirect === 'follow' || record.redirect === 'error' || record.redirect === 'manual'
+              ? record.redirect
+              : undefined,
+            headers,
+            body: record.body
+          });
+        }
+      }
+      for (const [childKey, childValue] of Object.entries(record)) {
+        // URL-bearing objects were inspected above; avoid adding a second
+        // GET-only copy that would miss method/body/headers.
+        if (['url', 'uri', 'endpoint', 'destination', 'callback', 'webhook'].includes(childKey)) continue;
+        visit(childValue, childKey, depth + 1);
+      }
+    }
+  };
+
+  visit(toolCall.arguments);
+  return requests;
+}
+
+function checkEgress(
+  toolCall: ToolCall,
+  context: MediationContext,
+  policy: Policy
+): { allowed: boolean; violations: string[]; capabilityViolations: CapabilityViolation[] } {
+  const violations: string[] = [];
+  const capabilityViolations: CapabilityViolation[] = [];
+
+  for (const request of findOutboundRequests(toolCall)) {
+    const result = inspectOutboundRequest(request, policy);
+    if (!result.safe) violations.push(...result.violations);
+  }
+
+  if (violations.length > 0) {
+    capabilityViolations.push({
+      type: 'egress',
+      provenanceLevel: 'untrusted',
+      message: `Outbound egress violations: ${violations.join('; ')}`
+    });
+  }
+
+  const allowed = violations.length === 0 || !isEnforceMode(context, policy);
+  return { allowed, violations, capabilityViolations };
+}
+
+function checkUnsafePayload(
+  toolCall: ToolCall,
+  context: MediationContext,
+  policy: Policy
+): { allowed: boolean; violations: string[]; capabilityViolations: CapabilityViolation[] } {
+  const text = stringifyForInspection(toolCall.arguments, 50_000);
+  const patterns: Array<{ name: string; pattern: RegExp }> = [
+    { name: 'template execution primitive', pattern: /\{\{[\s\S]{0,300}(?:__globals__|__builtins__|cycler|self\.__class__)/i },
+    { name: 'local file or cloud metadata probe', pattern: /(?:\/proc\/self\/(?:environ|mountinfo)|169\.254\.169\.254|metadata\.google\.internal|kubernetes\.default\.svc)/i },
+    { name: 'shell download-and-execute chain', pattern: /\b(?:curl|wget)\b[\s\S]{0,180}(?:\||;|&&)\s*(?:sh|bash|python|python3)\b/i },
+    { name: 'inline code execution', pattern: /\b(?:exec|eval|os\.system|subprocess\.(?:run|Popen)|child_process)\s*\(/i },
+    { name: 'encoded staged payload', pattern: /\b(?:base64\s+(?:-d|--decode)|gzip\s+-d|python3?\s+-c)\b/i }
+  ];
+  const violations = patterns
+    .filter(({ pattern }) => pattern.test(text))
+    .map(({ name }) => name);
+  const capabilityViolations: CapabilityViolation[] = violations.length > 0
+    ? [{
+      type: 'payload',
+      provenanceLevel: 'untrusted',
+      message: `Unsafe tool payload detected: ${violations.join(', ')}`
+    }]
+    : [];
+
+  const enforced = policy.tools.rbac.unsafe_payload_mode === 'enforce' ||
+    isEnforceMode(context, policy);
+  return {
+    allowed: violations.length === 0 || !enforced,
+    violations,
+    capabilityViolations
+  };
+}
+
 // ============================================================================
 // CAMEL-INSPIRED CAPABILITY ENFORCEMENT
 // ============================================================================
@@ -262,7 +465,7 @@ function checkToolSelectionProvenance(
 
   // If no selection provenance provided, allow in shadow mode
   if (!toolCall.selectionProvenance) {
-    if (context.provenancePolicy.mode === 'enforce') {
+    if ((context.enforcementMode || context.provenancePolicy.mode) === 'enforce') {
       return {
         allowed: false,
         violation: {
@@ -356,7 +559,7 @@ function checkArgumentProvenance(
 
     // If provenance not provided for required argument
     if (!argProvenance) {
-      if (context.provenancePolicy.mode === 'enforce') {
+      if ((context.enforcementMode || context.provenancePolicy.mode) === 'enforce') {
         violations.push({
           type: 'argument',
           argumentName: argName,
@@ -482,7 +685,7 @@ function checkCapabilities(
   }
 
   // Determine overall result based on mode
-  const enforceMode = context.provenancePolicy?.mode === 'enforce';
+  const enforceMode = context.provenancePolicy?.mode === 'enforce' || context.enforcementMode === 'enforce';
   const allowed = !enforceMode;
 
   return {
@@ -526,6 +729,18 @@ export async function toolMediator(
   policy: Policy,
   schemaRegistry: ToolSchemaRegistry = globalSchemaRegistry
 ): Promise<ToolMediatorResult> {
+  // Direct callers may create a context without runtime metadata. Derive a
+  // safe default from the policy rather than silently treating enforce-mode
+  // capability checks as shadow-only.
+  if (!context.enforcementMode) {
+    context = {
+      ...context,
+      enforcementMode: policy.mode === 'enforce' || context.provenancePolicy?.mode === 'enforce'
+        ? 'enforce'
+        : 'shadow'
+    };
+  }
+
   // Step 1: RBAC check
   const rbacCheck = checkRBAC(toolCall.name, policy);
   if (!rbacCheck.allowed) {
@@ -576,7 +791,46 @@ export async function toolMediator(
     };
   }
 
-  // Step 6: CaMeL capability enforcement (NEW)
+  // Step 6: Unsafe payload boundary. This catches template execution,
+  // staged shell payloads, metadata probes, and common RCE-shaped arguments.
+  const payloadCheck = checkUnsafePayload(toolCall, context, policy);
+  if (!payloadCheck.allowed) {
+    return {
+      allowed: false,
+      reason: payloadCheck.capabilityViolations[0]?.message,
+      context,
+      capabilityViolations: payloadCheck.capabilityViolations,
+      payloadViolations: payloadCheck.violations
+    };
+  }
+
+  // Step 7: Egress boundary. This catches SSRF, metadata access, secret
+  // transmission, and common dead-drop destinations before the tool runs.
+  const egressCheck = checkEgress(toolCall, context, policy);
+  if (!egressCheck.allowed) {
+    return {
+      allowed: false,
+      reason: egressCheck.capabilityViolations[0]?.message,
+      context,
+      capabilityViolations: egressCheck.capabilityViolations,
+      egressViolations: egressCheck.violations
+    };
+  }
+
+  // Step 8: High-impact action approval. A model-generated tool call cannot
+  // approve itself; the server-owned verifier must do so.
+  const approvalCheck = await checkApproval(toolCall, context, policy);
+  if (!approvalCheck.allowed) {
+    return {
+      allowed: false,
+      reason: approvalCheck.violation?.message,
+      context,
+      capabilityViolations: approvalCheck.violation ? [approvalCheck.violation] : undefined,
+      requiresApproval: approvalCheck.required
+    };
+  }
+
+  // Step 9: CaMeL capability enforcement
   const capabilityCheck = checkCapabilities(toolCall, context);
   if (!capabilityCheck.allowed) {
     return {
@@ -598,12 +852,21 @@ export async function toolMediator(
   // Include any violations for shadow mode logging
   const result: ToolMediatorResult = {
     allowed: true,
-    context: updatedContext
+    context: updatedContext,
+    egressViolations: egressCheck.violations.length > 0 ? egressCheck.violations : undefined,
+    payloadViolations: payloadCheck.violations.length > 0 ? payloadCheck.violations : undefined,
+    requiresApproval: approvalCheck.required
   };
 
-  // In shadow mode, include violations for logging but still allow
-  if (capabilityCheck.violations.length > 0) {
-    result.capabilityViolations = capabilityCheck.violations;
+  // In shadow mode, include violations for logging but still allow.
+  const shadowViolations = [
+    ...payloadCheck.capabilityViolations,
+    ...egressCheck.capabilityViolations,
+    ...(approvalCheck.violation ? [approvalCheck.violation] : []),
+    ...capabilityCheck.violations
+  ];
+  if (shadowViolations.length > 0) {
+    result.capabilityViolations = shadowViolations;
   }
 
   return result;
@@ -645,7 +908,11 @@ export async function toolMediatorBatch(
  */
 export function createMediationContext(
   sessionId?: string,
-  provenancePolicy?: ProvenancePolicy
+  provenancePolicy?: ProvenancePolicy,
+  options: {
+    enforcementMode?: 'shadow' | 'enforce';
+    approvalVerifier?: ToolApprovalVerifier;
+  } = {}
 ): MediationContext {
   return {
     sessionId,
@@ -653,7 +920,9 @@ export function createMediationContext(
     callDepth: 0,
     history: [],
     provenancePolicy,
-    outputProvenance: []
+    outputProvenance: [],
+    enforcementMode: options.enforcementMode,
+    approvalVerifier: options.approvalVerifier
   };
 }
 
@@ -715,4 +984,3 @@ export function recordToolOutput(
     outputProvenance: [...(context.outputProvenance || []), outputProv]
   };
 }
-
