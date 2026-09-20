@@ -41,12 +41,15 @@ https://github.com/user-attachments/assets/65268509-de61-4d4e-9f7a-8439164db09e
 
 | Package | Description | Status |
 |---------|-------------|--------|
-| [`@spear-secure/core`](./packages/core) | Security middleware for LLM I/O pipelines | Published |
-| [`@spear-secure/hook`](./packages/hook) | Claude Code PostToolUse hook | Published |
-| [`@spear-secure/mcp`](./packages/mcp) | MCP server for Claude Desktop, Cursor, Windsurf | Published |
+| [`@spear-secure/core`](./packages/core) | Security middleware for LLM I/O pipelines | Published on npm |
+| [`@spear-secure/hook`](./packages/hook) | Claude Code PostToolUse hook | Published on npm |
+| [`@spear-secure/mcp`](./packages/mcp) | MCP server for Claude Desktop, Cursor, Windsurf | Source only; not published on npm |
 | [`@spear-secure/api`](./packages/api) | HTTP API (Docker) for Python/Go/Flowise/Dify | Preview |
 | [`spear-guard`](./packages/python) | Python SDK wrapping the HTTP API | Preview |
 | `@spear-secure/cli` | CLI for policy management | Planned |
+
+Public npm availability checked September 20, 2026: core `0.1.1`, hook `0.1.0`;
+MCP was not found. Code on main may include changes not yet released to npm.
 
 ---
 
@@ -400,14 +403,29 @@ SPEAR_MODE=enforce node server.js
 
 ## Eval harness
 
-Spear ships with a [promptfoo](https://promptfoo.dev) red-team eval covering 700+ attack probes across 11 languages:
+The repository includes attack corpora and an **experimental**
+[Promptfoo configuration](packages/core/eval/promptfooconfig.yaml). That configuration
+lists **English, Spanish, Danish and Hindi**. Additional language files exist in the
+[corpus directory](packages/core/redteam/languages), but their presence does not
+establish executed test coverage. No current report establishes the total number of executed probes or evaluated
+coverage for every language in the corpus.
+
+The [evaluation provider](packages/core/eval/scripts/run-guarded.js) uses a mock
+model, not a live-model security benchmark. The configured targets (≤ 0.1% leak
+rate and ≤ 2% false-block rate) are **targets, not demonstrated results**. The
+[CI workflow](.github/workflows/ci.yml) can continue when evaluation fails or a
+report is missing; a green build alone does not establish these thresholds.
+`pnpm eval` loads the provider module rather than executing the full corpus.
+
+For the current build and automated test suites, run:
 
 ```bash
-npm i -g promptfoo
-promptfoo eval -c packages/core/eval/promptfooconfig.yaml
+pnpm build
+pnpm test
 ```
 
-Run this in CI. Thresholds: ≤ 0.1% leak rate, ≤ 2% false-block rate. See [PROBE_VERIFICATION_REPORT.md](./PROBE_VERIFICATION_REPORT.md) for baseline results.
+[PROBE_VERIFICATION_REPORT.md](./PROBE_VERIFICATION_REPORT.md) is a historical
+report from October 2025, not a current verification of the full corpus.
 
 ---
 

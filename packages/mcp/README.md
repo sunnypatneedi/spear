@@ -4,9 +4,19 @@ MCP (Model Context Protocol) server that exposes Spear security gates to any MCP
 
 ## Quick Start
 
+This package is available from source. It is not published on the public npm
+registry as of September 20, 2026. Build it from the repository:
+
 ```bash
-npx @spear-secure/mcp
+git clone https://github.com/sunnypatneedi/spear.git
+cd spear
+pnpm install --frozen-lockfile
+pnpm build
+node packages/mcp/dist/index.js
 ```
+
+For client configuration below, replace `/absolute/path/to/spear` with your local
+checkout path. The client launches the built server using Node.js.
 
 ### Claude Desktop
 
@@ -16,8 +26,8 @@ Add to `~/Library/Application Support/Claude/claude_desktop_config.json`:
 {
   "mcpServers": {
     "spear-security": {
-      "command": "npx",
-      "args": ["@spear-secure/mcp"],
+      "command": "node",
+      "args": ["/absolute/path/to/spear/packages/mcp/dist/index.js"],
       "env": { "SPEAR_MODE": "shadow" }
     }
   }
@@ -32,8 +42,8 @@ Add to `.cursor/mcp.json`:
 {
   "mcpServers": {
     "spear-security": {
-      "command": "npx",
-      "args": ["@spear-secure/mcp"]
+      "command": "node",
+      "args": ["/absolute/path/to/spear/packages/mcp/dist/index.js"]
     }
   }
 }
