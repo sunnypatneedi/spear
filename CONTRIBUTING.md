@@ -56,7 +56,7 @@ pnpm typecheck      # type check without emitting
 pnpm lint           # ESLint
 ```
 
-Tests in `packages/core/tests/` cover the full gate pipeline. The eval harness in `packages/core/eval/` runs the complete red-team corpus against promptfoo — run it with `pnpm eval`.
+Tests in `packages/core/tests/` cover the full gate pipeline. The [eval harness](packages/core/eval/README.md) executes every reviewed corpus entry through isolated input screening — run it with `pnpm eval`. Corpus edits require reviewing the language, benign line labels and content hash in `packages/core/eval/corpus.json`. The current baseline misses the screening target, so evaluation exits nonzero; do not relax thresholds to conceal misses.
 
 ## Pull Request Guidelines
 

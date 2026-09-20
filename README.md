@@ -403,26 +403,27 @@ SPEAR_MODE=enforce node server.js
 
 ## Eval harness
 
-The repository includes attack corpora and an **experimental**
-[Promptfoo configuration](packages/core/eval/promptfooconfig.yaml). That configuration
-lists **English, Spanish, Danish and Hindi**. Additional language files exist in the
-[corpus directory](packages/core/redteam/languages), but their presence does not
-establish executed test coverage. No current report establishes the total number of executed probes or evaluated
-coverage for every language in the corpus.
+`pnpm eval` runs SPEAR's input screening against every reviewed corpus entry,
+using the balanced policy in enforce mode with a fresh runtime per case. It uses
+no external model or sidecar. See the [evaluation method and limitations](packages/core/eval/README.md).
 
-The [evaluation provider](packages/core/eval/scripts/run-guarded.js) uses a mock
-model, not a live-model security benchmark. The configured targets (≤ 0.1% leak
-rate and ≤ 2% false-block rate) are **targets, not demonstrated results**. The
-[CI workflow](.github/workflows/ci.yml) can continue when evaluation fails or a
-report is missing; a green build alone does not establish these thresholds.
-`pnpm eval` loads the provider module rather than executing the full corpus.
-
-For the current build and automated test suites, run:
+The [initial reproducible run](packages/core/eval/BASELINE.md) executed **257 unique
+cases across 12 language labels**: 238 attack-labelled prompts and 19 benign
+controls. SPEAR blocked **104/238 attacks (43.7%)** and **0/19 benign controls**.
+**The input-blocking target is not met.** These small, uneven samples do not
+establish language-wide effectiveness or a real-world false-block rate.
 
 ```bash
 pnpm build
 pnpm test
+pnpm eval                                      # writes report; exits 1 if targets fail
+pnpm --filter @spear-secure/core eval:verify     # independently validates report
 ```
+
+CI requires a complete report from the current run and fails on execution errors,
+missing or stale results, attack-allowed rate above 5%, or benign false-block rate
+above 2%. These are **input-screening targets**, not demonstrated live-model leak
+rates. Output leakage, tool-use scenarios and latency require separate evaluations.
 
 [PROBE_VERIFICATION_REPORT.md](./PROBE_VERIFICATION_REPORT.md) is a historical
 report from October 2025, not a current verification of the full corpus.

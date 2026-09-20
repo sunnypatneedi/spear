@@ -1,0 +1,112 @@
+{
+  "schemaVersion": 1,
+  "sources": [
+    {
+      "path": "attacks.core.txt",
+      "language": "en",
+      "sha256": "972a8ec28b2cd26ab46fc86a84b8e9623c33c63538995b0ddff3c184079fba9a",
+      "benignLines": []
+    },
+    {
+      "path": "attacks.obfuscated.txt",
+      "language": "en",
+      "sha256": "1a0539da4ff1edca45a4b3543d38d860a7ca9dd26cdede939fb979062353b3a8",
+      "benignLines": []
+    },
+    {
+      "path": "attacks.txt",
+      "language": "en",
+      "sha256": "041c8d3dd866f4f41cb6c741c18046f82d4126b60748c2050497c1414304e2b4",
+      "benignLines": [
+        139,
+        140,
+        141,
+        142,
+        143
+      ]
+    },
+    {
+      "path": "languages/ar.txt",
+      "language": "ar",
+      "sha256": "d062e01ad6d6690de8e354bd46e79cdc0c174c9f46bf7d140633411c06ffd262",
+      "benignLines": []
+    },
+    {
+      "path": "languages/da.txt",
+      "language": "da",
+      "sha256": "3f4fd98de27dc11bb2dc98b20e72012b61c88791fd2d3d17281b4f288f7f2898",
+      "benignLines": [
+        60,
+        61,
+        62,
+        63
+      ]
+    },
+    {
+      "path": "languages/de.txt",
+      "language": "de",
+      "sha256": "cd4de6824ed289425327e3e231788e45fdb17a5847bd9d38ba2b34fc09034c9d",
+      "benignLines": []
+    },
+    {
+      "path": "languages/es.txt",
+      "language": "es",
+      "sha256": "b4f118012e462e88f6cd0872917de10d6386591339d59c95c41a47749c00741c",
+      "benignLines": [
+        68,
+        69,
+        70,
+        71,
+        72
+      ]
+    },
+    {
+      "path": "languages/fr.txt",
+      "language": "fr",
+      "sha256": "ddbbbd0dfa403a181b161017450dae6cfd2d8f62a22e9f2a225c3777d7aec4bf",
+      "benignLines": []
+    },
+    {
+      "path": "languages/hi.txt",
+      "language": "hi",
+      "sha256": "4384463fad38d97e4e4d699473c9bfcdc2d5ebc559469781b34e94876a9a486b",
+      "benignLines": [
+        55,
+        56,
+        57,
+        58,
+        59
+      ]
+    },
+    {
+      "path": "languages/ja.txt",
+      "language": "ja",
+      "sha256": "83ed71853568b9584113061ca6c26e8242b9a13b3544154cbd1cda093524f55c",
+      "benignLines": []
+    },
+    {
+      "path": "languages/ko.txt",
+      "language": "ko",
+      "sha256": "67668849e7cc7aeff16ff302d6dfdd615b16aff0b2c4b1802a5a001556248849",
+      "benignLines": []
+    },
+    {
+      "path": "languages/pt.txt",
+      "language": "pt",
+      "sha256": "8cc0bd9f4f986a782f7d1a7653143b68d89255901e03cdbed7ff67f6b881b926",
+      "benignLines": []
+    },
+    {
+      "path": "languages/ru.txt",
+      "language": "ru",
+      "sha256": "4b63a90ef5846391705c48af2dd14de671143efbb523fcbaa4be05177df2d7bd",
+      "benignLines": []
+    },
+    {
+      "path": "languages/zh.txt",
+      "language": "zh",
+      "sha256": "c70fb25cb72ef96db0c3b84eb829ee2fc344e37f35a8e66762100e0b32e7891d",
+      "benignLines": []
+    }
+  ]
+}
