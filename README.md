@@ -4,11 +4,25 @@
 
 ![SPEAR checks requests, answers, actions and outside information, tracks risk across steps, and offers optional checks on outgoing data.](docs/architecture/spear.png)
 
-SPEAR combines **LLM I/O checks**, **provenance-aware tool mediation**, and
-**stateful agent controls** in an application-integrated runtime. Session budgets,
-result scanning, persistent canaries and policy-dependent attack-sequence detection
-extend protection across steps. YAML policies support shadow and enforce modes.
-Your application owns execution and must honor SPEAR's verdicts.
+## How SPEAR compares
+
+| Tool | What it helps you do | What to know |
+| --- | --- | --- |
+| **[SPEAR](docs/architecture/README.md)** | Check what your AI reads, says and does; track risk throughout a task. | Combines safety checks, action permissions and task limits. Your developer connects them to your app. |
+| **[NeMo Guardrails](https://github.com/NVIDIA-NeMo/Guardrails#types-of-guardrails)** | Guide conversations and check information and actions used by an AI. | Useful when you want to define how conversations should flow. Your team configures the rules. |
+| **[Guardrails AI](https://github.com/guardrails-ai/guardrails)** | Check that AI answers meet your rules and return information in the format you need. | Your team chooses the checks and what happens when an answer fails them. |
+| **[LLM Guard](https://github.com/protectai/llm-guard)** | Scan text for hidden instructions, exposed secrets and sensitive information. | The project is archived and no longer maintained. |
+| **[Llama Guard 4](https://huggingface.co/meta-llama/Llama-Guard-4-12B)** | Flag potentially unsafe text and images. | It labels content; your app decides what to block. |
+| **[Llama Prompt Guard 2](https://huggingface.co/meta-llama/Llama-Prompt-Guard-2-86M)** | Spot instructions that try to trick an AI into ignoring its rules. | A focused detector. Your app still needs action permissions and task limits. |
+| **[Check Point AI Guardrails (Lakera)](https://docs.lakera.ai/docs/agent-behavior-defense)** | Screen content and check which actions an AI can take. | Also offers a beta check for dangerous actions outside the user's request. Your app connects to its security service. |
+
+**Why consider SPEAR?** It brings content checks, action permissions and ongoing
+risk tracking together for apps built with JavaScript or TypeScript. Your app must
+follow its decisions; no tool guarantees complete protection.
+
+Based on official documentation reviewed September 19, 2026. Features overlap;
+this is not a ranking of which tool catches the most attacks.
+[Detailed comparison and sources](docs/competitive-analysis.md).
 
 [Architecture and trust boundaries](docs/architecture/README.md) ·
 [Archify source](docs/architecture/spear.architecture.json) ·
@@ -27,12 +41,15 @@ https://github.com/user-attachments/assets/65268509-de61-4d4e-9f7a-8439164db09e
 
 | Package | Description | Status |
 |---------|-------------|--------|
-| [`@spear-secure/core`](./packages/core) | Security middleware for LLM I/O pipelines | Published |
-| [`@spear-secure/hook`](./packages/hook) | Claude Code PostToolUse hook | Published |
-| [`@spear-secure/mcp`](./packages/mcp) | MCP server for Claude Desktop, Cursor, Windsurf | Published |
+| [`@spear-secure/core`](./packages/core) | Security middleware for LLM I/O pipelines | Published on npm |
+| [`@spear-secure/hook`](./packages/hook) | Claude Code PostToolUse hook | Published on npm |
+| [`@spear-secure/mcp`](./packages/mcp) | MCP server for Claude Desktop, Cursor, Windsurf | Source only; not published on npm |
 | [`@spear-secure/api`](./packages/api) | HTTP API (Docker) for Python/Go/Flowise/Dify | Preview |
 | [`spear-guard`](./packages/python) | Python SDK wrapping the HTTP API | Preview |
 | `@spear-secure/cli` | CLI for policy management | Planned |
+
+Public npm availability checked September 20, 2026: core `0.1.1`, hook `0.1.0`;
+MCP was not found. Code on main may include changes not yet released to npm.
 
 ---
 
@@ -386,14 +403,29 @@ SPEAR_MODE=enforce node server.js
 
 ## Eval harness
 
-Spear ships with a [promptfoo](https://promptfoo.dev) red-team eval covering 700+ attack probes across 11 languages:
+The repository includes attack corpora and an **experimental**
+[Promptfoo configuration](packages/core/eval/promptfooconfig.yaml). That configuration
+lists **English, Spanish, Danish and Hindi**. Additional language files exist in the
+[corpus directory](packages/core/redteam/languages), but their presence does not
+establish executed test coverage. No current report establishes the total number of executed probes or evaluated
+coverage for every language in the corpus.
+
+The [evaluation provider](packages/core/eval/scripts/run-guarded.js) uses a mock
+model, not a live-model security benchmark. The configured targets (≤ 0.1% leak
+rate and ≤ 2% false-block rate) are **targets, not demonstrated results**. The
+[CI workflow](.github/workflows/ci.yml) can continue when evaluation fails or a
+report is missing; a green build alone does not establish these thresholds.
+`pnpm eval` loads the provider module rather than executing the full corpus.
+
+For the current build and automated test suites, run:
 
 ```bash
-npm i -g promptfoo
-promptfoo eval -c packages/core/eval/promptfooconfig.yaml
+pnpm build
+pnpm test
 ```
 
-Run this in CI. Thresholds: ≤ 0.1% leak rate, ≤ 2% false-block rate. See [PROBE_VERIFICATION_REPORT.md](./PROBE_VERIFICATION_REPORT.md) for baseline results.
+[PROBE_VERIFICATION_REPORT.md](./PROBE_VERIFICATION_REPORT.md) is a historical
+report from October 2025, not a current verification of the full corpus.
 
 ---
 
@@ -513,37 +545,6 @@ SPEAR_SIDECAR_URL=http://localhost:8088 node server.js
 ```
 
 Without the sidecar, Spear runs fully in-process. The sidecar is optional but recommended for high-security deployments.
-
----
-
-## Compared to alternatives
-
-Reviewed **September 19, 2026** against the official documentation linked below.
-These products cover different layers: application runtimes, validation libraries,
-security APIs and classifier models. This is a capability and integration comparison,
-**not a head-to-head security, accuracy or latency benchmark**. A missing documented
-feature is not evidence that a competitor cannot implement it.
-
-| Project / product | Documented strengths | Integration and tradeoff | Where SPEAR fits |
-| --- | --- | --- | --- |
-| **SPEAR** ([implementation](packages/core/src/core/session.ts)) | TypeScript session controls: tool permissions, application-supplied provenance, verified approvals, canaries, budgets and cross-step risk checks | In-process core; YAML shadow/enforce policy. Applications must wire checks and honor decisions; detection is heuristic and policy-dependent | Combines content checks with stateful action controls in a Node.js / TypeScript agent loop |
-| **NeMo Guardrails** ([docs](https://github.com/NVIDIA-NeMo/Guardrails#types-of-guardrails)) | Input, output, dialog, retrieval and tool-execution rails; configurable injection checks | Python library or server; YAML + Colang define behavior and custom actions | Consider NeMo for programmable conversation flows; SPEAR for its TypeScript session-control API. Retrieval/tool protection is **not exclusive** to SPEAR |
-| **Guardrails AI** ([project](https://github.com/guardrails-ai/guardrails), [validators](https://guardrailsai.com/guardrails/docs/concepts/validators)) | Composable input/output validators, structured output generation, custom checks and configurable failure actions | Python framework; select validators and configure how failures are handled | Consider Guardrails AI for data/output validation; SPEAR for coordinating permissions and risk across agent steps |
-| **LLM Guard** ([project status](https://github.com/protectai/llm-guard), [injection scanner](https://protectai.github.io/llm-guard/input_scanners/prompt_injection/)) | Injection, secrets and sensitive-data scanners; documents indirect injection and RAG threats | Python toolkit/API. Repository now states it is **archived and no longer maintained** | Scanner-based integration overlaps with SPEAR's content checks; SPEAR additionally packages session budgets and action mediation |
-| **Llama Guard 4** ([model card](https://huggingface.co/meta-llama/Llama-Guard-4-12B)) | Multimodal input/output safety classification, including a text-only code-interpreter-abuse category | Model inference returns safety labels; the surrounding application enforces them | A classifier can complement an application runtime; classification itself does not implement SPEAR's tool authorization and session lifecycle |
-| **Llama Prompt Guard 2** ([model card](https://huggingface.co/meta-llama/Llama-Prompt-Guard-2-86M)) | Dedicated prompt-injection and jailbreak classifiers, including attacks in third-party content | 22M/86M models; 512-token window requires segmentation for longer content | A detector option for an application pipeline; distinct from Llama Guard's content-safety role. No built-in SPEAR integration is claimed |
-| **Check Point AI Guardrails (Lakera)** ([quickstart](https://docs.lakera.ai/docs/quickstart), [project modes](https://docs.lakera.ai/docs/projects)) | Content screening plus [tool allow/deny lists and beta action-deviation detection](https://docs.lakera.ai/docs/agent-behavior-defense); Detect/Enforce modes | Guard API with project policies; [enterprise self-hosting is documented](https://docs.lakera.ai/docs/selfhosting). Application integration controls enforcement | A direct overlap in content and action checks; compare its Guard API with SPEAR's in-process TypeScript session controls. Observe-before-block is **not exclusive** to SPEAR |
-
-**SPEAR's focus:** combine [session budgets and observation](packages/core/src/core/session.ts),
-[provenance-aware tool permissions and approval verification](packages/core/src/gates/tool_mediator.ts),
-[session canaries](packages/core/src/core/canary.ts) and
-[opt-in outbound HTTP inspection](packages/core/src/core/egress.ts) in one runtime.
-Provenance must come from trusted application code; outbound checks cover routed
-requests, not all network traffic. SPEAR does not replace a sandbox or network policy,
-and this review does not establish superior detection or unique ownership of these ideas.
-
-See the [competitive review](docs/competitive-analysis.md) for scope, findings and
-recommended validation work.
 
 ---
 
