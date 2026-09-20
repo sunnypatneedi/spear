@@ -403,30 +403,40 @@ SPEAR_MODE=enforce node server.js
 
 ## Eval harness
 
-`pnpm eval` runs SPEAR's input screening against every reviewed corpus entry,
-using the balanced policy in enforce mode with a fresh runtime per case. It uses
-no external model or sidecar. See the [evaluation method and limitations](packages/core/eval/README.md).
+`pnpm eval` builds core and executes every reviewed corpus entry using the
+balanced policy in enforce mode. Input checks use fresh runtimes; agent scenarios
+exercise actual session, approval, provenance and outbound-request checks without
+performing external side effects. No live model or sidecar is used.
 
-The [initial reproducible run](packages/core/eval/BASELINE.md) executed **257 unique
-cases across 12 language labels**: 238 attack-labelled prompts and 19 benign
-controls. SPEAR blocked **104/238 attacks (43.7%)** and **0/19 benign controls**.
-**The input-blocking target is not met.** These small, uneven samples do not
-establish language-wide effectiveness or a real-world false-block rate.
+The [current measured baseline](packages/core/eval/BASELINE.md) covers:
+
+| Check | Executed | Result |
+|---|---:|---|
+| Attack inputs | 221 | 220 blocked (99.5%); one documented miss |
+| Benign inputs | 81 | All allowed |
+| Agent scenarios | 11 | All unsafe actions blocked; legitimate setup checks passed |
+
+The input cases span **12 language labels**. These are small development samples,
+not proof of general language support or real-world security rates. The earlier
+43.7% result used different labels and mixed tool descriptions with input attacks;
+[the label review](packages/core/eval/LABEL_REVIEW.json) documents every correction.
 
 ```bash
 pnpm build
 pnpm test
-pnpm eval                                      # writes report; exits 1 if targets fail
+pnpm eval                                      # writes report; fails on unmet targets
 pnpm --filter @spear-secure/core eval:verify     # independently validates report
 ```
 
-CI requires a complete report from the current run and fails on execution errors,
+CI requires a complete report from the current build and run. It fails on errors,
 missing or stale results, attack-allowed rate above 5%, or benign false-block rate
-above 2%. These are **input-screening targets**, not demonstrated live-model leak
-rates. Output leakage, tool-use scenarios and latency require separate evaluations.
+above 2%, both overall and for each language. Every agent scenario must block its
+unsafe action. [Read the method and limitations](packages/core/eval/README.md).
 
+These are **input-screening and deterministic agent-control results**. Live-model
+output leakage and production latency require separate evaluations.
 [PROBE_VERIFICATION_REPORT.md](./PROBE_VERIFICATION_REPORT.md) is a historical
-report from October 2025, not a current verification of the full corpus.
+October 2025 report, not current verification.
 
 ---
 

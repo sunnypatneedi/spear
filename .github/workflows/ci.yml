@@ -10,6 +10,7 @@ jobs:
   test:
     name: Test
     runs-on: ubuntu-latest
+    timeout-minutes: 10
 
     steps:
       - name: Checkout code
@@ -42,8 +43,9 @@ jobs:
         run: pnpm test
 
   redteam:
-    name: Red Team Evaluation
+    name: Security Evaluation
     runs-on: ubuntu-latest
+    timeout-minutes: 10
 
     steps:
       - name: Checkout code
@@ -66,7 +68,7 @@ jobs:
       - name: Build packages
         run: pnpm build
 
-      - name: Run input-screening evaluation
+      - name: Run input-screening and agent-scenario evaluation
         run: pnpm eval
         env:
           SPEAR_EVAL_RUN_ID: ${{ github.run_id }}:${{ github.run_attempt }}

@@ -92,7 +92,7 @@ SPEAR_MODE=enforce node server.js
 ## Verify attack coverage
 
 ```bash
-# Run deterministic input screening; no model credentials needed
+# Run deterministic input screening and agent scenarios; no model credentials needed
 pnpm eval
 
 # Writes packages/core/eval/report.json and fails when screening targets are missed.

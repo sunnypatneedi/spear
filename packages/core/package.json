@@ -56,7 +56,7 @@
     "test:watch": "vitest",
     "test:probes": "pnpm eval",
     "test:all": "pnpm test && pnpm eval",
-    "eval": "pnpm build && node ./eval/scripts/evaluate.mjs",
+    "eval": "node ./eval/scripts/evaluate.mjs",
     "typecheck": "tsc --project tsconfig.json --noEmit",
     "lint": "eslint 'src/**/*.ts'",
     "eval:verify": "node ./eval/scripts/verify.mjs"
