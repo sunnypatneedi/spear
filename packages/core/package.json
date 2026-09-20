@@ -52,13 +52,14 @@
   },
   "scripts": {
     "build": "tsc --project tsconfig.json",
-    "test": "vitest run",
+    "test": "vitest run && node --test eval/scripts/check-harness.mjs",
     "test:watch": "vitest",
-    "test:probes": "tsx tests/verify-probes.ts",
-    "test:all": "vitest run && tsx tests/verify-probes.ts",
-    "eval": "node ./eval/scripts/run-guarded.js",
+    "test:probes": "pnpm eval",
+    "test:all": "pnpm test && pnpm eval",
+    "eval": "node ./eval/scripts/evaluate.mjs",
     "typecheck": "tsc --project tsconfig.json --noEmit",
-    "lint": "eslint 'src/**/*.ts'"
+    "lint": "eslint 'src/**/*.ts'",
+    "eval:verify": "node ./eval/scripts/verify.mjs"
   },
   "dependencies": {
     "yaml": "^2.5.0",

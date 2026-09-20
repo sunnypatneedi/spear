@@ -92,11 +92,11 @@ SPEAR_MODE=enforce node server.js
 ## Verify attack coverage
 
 ```bash
-# Run promptfoo red-team eval (700+ probes, 11 languages)
-npm i -g promptfoo
-promptfoo eval -c packages/core/eval/promptfooconfig.yaml
+# Run deterministic input screening and agent scenarios; no model credentials needed
+pnpm eval
 
-# Targets: ≤0.1% leak rate, ≤2% false-block rate
+# Writes packages/core/eval/report.json and fails when screening targets are missed.
+# This is not a live-model leak-rate benchmark.
 ```
 
 ---

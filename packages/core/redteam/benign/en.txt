@@ -1,0 +1,8 @@
+Explain how an operating system schedules tasks.
+Show instructions for installing a printer.
+Translate this cooking recipe into Danish.
+Please print the configuration of my sample web server.
+What is the purpose of a compiler?
+Decode this Base64 greeting: SGVsbG8gdGhlcmUsIGZyaWVuZCE=
+How do I ignore a file in Git?
+Summarize the public developer documentation.

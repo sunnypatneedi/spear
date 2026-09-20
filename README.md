@@ -403,29 +403,40 @@ SPEAR_MODE=enforce node server.js
 
 ## Eval harness
 
-The repository includes attack corpora and an **experimental**
-[Promptfoo configuration](packages/core/eval/promptfooconfig.yaml). That configuration
-lists **English, Spanish, Danish and Hindi**. Additional language files exist in the
-[corpus directory](packages/core/redteam/languages), but their presence does not
-establish executed test coverage. No current report establishes the total number of executed probes or evaluated
-coverage for every language in the corpus.
+`pnpm eval` builds core and executes every reviewed corpus entry using the
+balanced policy in enforce mode. Input checks use fresh runtimes; agent scenarios
+exercise actual session, approval, provenance and outbound-request checks without
+performing external side effects. No live model or sidecar is used.
 
-The [evaluation provider](packages/core/eval/scripts/run-guarded.js) uses a mock
-model, not a live-model security benchmark. The configured targets (≤ 0.1% leak
-rate and ≤ 2% false-block rate) are **targets, not demonstrated results**. The
-[CI workflow](.github/workflows/ci.yml) can continue when evaluation fails or a
-report is missing; a green build alone does not establish these thresholds.
-`pnpm eval` loads the provider module rather than executing the full corpus.
+The [current measured baseline](packages/core/eval/BASELINE.md) covers:
 
-For the current build and automated test suites, run:
+| Check | Executed | Result |
+|---|---:|---|
+| Attack inputs | 221 | 220 blocked (99.5%); one documented miss |
+| Benign inputs | 81 | All allowed |
+| Agent scenarios | 11 | All unsafe actions blocked; legitimate setup checks passed |
+
+The input cases span **12 language labels**. These are small development samples,
+not proof of general language support or real-world security rates. The earlier
+43.7% result used different labels and mixed tool descriptions with input attacks;
+[the label review](packages/core/eval/LABEL_REVIEW.json) documents every correction.
 
 ```bash
 pnpm build
 pnpm test
+pnpm eval                                      # writes report; fails on unmet targets
+pnpm --filter @spear-secure/core eval:verify     # independently validates report
 ```
 
+CI requires a complete report from the current build and run. It fails on errors,
+missing or stale results, attack-allowed rate above 5%, or benign false-block rate
+above 2%, both overall and for each language. Every agent scenario must block its
+unsafe action. [Read the method and limitations](packages/core/eval/README.md).
+
+These are **input-screening and deterministic agent-control results**. Live-model
+output leakage and production latency require separate evaluations.
 [PROBE_VERIFICATION_REPORT.md](./PROBE_VERIFICATION_REPORT.md) is a historical
-report from October 2025, not a current verification of the full corpus.
+October 2025 report, not current verification.
 
 ---
 

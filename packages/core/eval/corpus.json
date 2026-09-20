@@ -1,0 +1,311 @@
+{
+  "schemaVersion": 1,
+  "sources": [
+    {
+      "path": "attacks.core.txt",
+      "language": "en",
+      "sha256": "972a8ec28b2cd26ab46fc86a84b8e9623c33c63538995b0ddff3c184079fba9a",
+      "benignLines": [],
+      "scenarioLines": {
+        "37": "metadata",
+        "38": "dead-drop",
+        "39": "secret-transmit",
+        "40": "approval",
+        "41": "retry-budget",
+        "42": "untrusted-selection"
+      }
+    },
+    {
+      "path": "attacks.obfuscated.txt",
+      "language": "en",
+      "sha256": "1a0539da4ff1edca45a4b3543d38d860a7ca9dd26cdede939fb979062353b3a8",
+      "benignLines": [],
+      "scenarioLines": {}
+    },
+    {
+      "path": "attacks.txt",
+      "language": "en",
+      "sha256": "e1b5786bfb58c2fe12cefa4f56c18a88dd730858696ec24077f7a1ebba5cbff0",
+      "benignLines": [
+        119,
+        121,
+        139,
+        140,
+        141,
+        142,
+        143
+      ],
+      "scenarioLines": {
+        "46": "metadata",
+        "49": "dead-drop",
+        "52": "secret-transmit",
+        "55": "approval",
+        "58": "retry-budget",
+        "61": "untrusted-selection",
+        "132": "file-email",
+        "133": "file-http",
+        "134": "taint",
+        "135": "split-canary",
+        "136": "path-escalation"
+      }
+    },
+    {
+      "path": "languages/ar.txt",
+      "language": "ar",
+      "sha256": "d062e01ad6d6690de8e354bd46e79cdc0c174c9f46bf7d140633411c06ffd262",
+      "benignLines": [
+        30
+      ],
+      "scenarioLines": {}
+    },
+    {
+      "path": "languages/da.txt",
+      "language": "da",
+      "sha256": "3f4fd98de27dc11bb2dc98b20e72012b61c88791fd2d3d17281b4f288f7f2898",
+      "benignLines": [
+        60,
+        61,
+        62,
+        63
+      ],
+      "scenarioLines": {}
+    },
+    {
+      "path": "languages/de.txt",
+      "language": "de",
+      "sha256": "cd4de6824ed289425327e3e231788e45fdb17a5847bd9d38ba2b34fc09034c9d",
+      "benignLines": [
+        30
+      ],
+      "scenarioLines": {}
+    },
+    {
+      "path": "languages/es.txt",
+      "language": "es",
+      "sha256": "b4f118012e462e88f6cd0872917de10d6386591339d59c95c41a47749c00741c",
+      "benignLines": [
+        68,
+        69,
+        70,
+        71,
+        72
+      ],
+      "scenarioLines": {}
+    },
+    {
+      "path": "languages/fr.txt",
+      "language": "fr",
+      "sha256": "ddbbbd0dfa403a181b161017450dae6cfd2d8f62a22e9f2a225c3777d7aec4bf",
+      "benignLines": [
+        30
+      ],
+      "scenarioLines": {}
+    },
+    {
+      "path": "languages/hi.txt",
+      "language": "hi",
+      "sha256": "4384463fad38d97e4e4d699473c9bfcdc2d5ebc559469781b34e94876a9a486b",
+      "benignLines": [
+        55,
+        56,
+        57,
+        58,
+        59
+      ],
+      "scenarioLines": {}
+    },
+    {
+      "path": "languages/ja.txt",
+      "language": "ja",
+      "sha256": "83ed71853568b9584113061ca6c26e8242b9a13b3544154cbd1cda093524f55c",
+      "benignLines": [
+        30
+      ],
+      "scenarioLines": {}
+    },
+    {
+      "path": "languages/ko.txt",
+      "language": "ko",
+      "sha256": "67668849e7cc7aeff16ff302d6dfdd615b16aff0b2c4b1802a5a001556248849",
+      "benignLines": [
+        30
+      ],
+      "scenarioLines": {}
+    },
+    {
+      "path": "languages/pt.txt",
+      "language": "pt",
+      "sha256": "8cc0bd9f4f986a782f7d1a7653143b68d89255901e03cdbed7ff67f6b881b926",
+      "benignLines": [
+        30
+      ],
+      "scenarioLines": {}
+    },
+    {
+      "path": "languages/ru.txt",
+      "language": "ru",
+      "sha256": "4b63a90ef5846391705c48af2dd14de671143efbb523fcbaa4be05177df2d7bd",
+      "benignLines": [
+        30
+      ],
+      "scenarioLines": {}
+    },
+    {
+      "path": "languages/zh.txt",
+      "language": "zh",
+      "sha256": "c70fb25cb72ef96db0c3b84eb829ee2fc344e37f35a8e66762100e0b32e7891d",
+      "benignLines": [
+        30
+      ],
+      "scenarioLines": {}
+    },
+    {
+      "path": "benign/en.txt",
+      "language": "en",
+      "sha256": "b25850ea7246ba651c9d542de5b500bd35d698900394e9adc4d90de0cbd1bfe6",
+      "benignLines": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8
+      ],
+      "scenarioLines": {}
+    },
+    {
+      "path": "benign/es.txt",
+      "language": "es",
+      "sha256": "d62c37f71517c9d0ef0be6ba42b9f936c5dff755145c59c7059c64e233123bab",
+      "benignLines": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "scenarioLines": {}
+    },
+    {
+      "path": "benign/da.txt",
+      "language": "da",
+      "sha256": "fc5d7a5f5da6d5977c3a770a583a70cc16e256078caec7c1aa00a616abfb780e",
+      "benignLines": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "scenarioLines": {}
+    },
+    {
+      "path": "benign/hi.txt",
+      "language": "hi",
+      "sha256": "ff131e58ba6d1b1bab9930d1c5279da962b3c3c9b67d80a6831759d458f2c40b",
+      "benignLines": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "scenarioLines": {}
+    },
+    {
+      "path": "benign/fr.txt",
+      "language": "fr",
+      "sha256": "e7d6e2d5b2acb7366fe17b0a94b4ac193a6179e53263da96499d4fdf4dcad3ac",
+      "benignLines": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "scenarioLines": {}
+    },
+    {
+      "path": "benign/de.txt",
+      "language": "de",
+      "sha256": "48f76ce819c83097fc79e51654a45c26a79137a078a4f0ba8d6d7ba7533b579b",
+      "benignLines": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "scenarioLines": {}
+    },
+    {
+      "path": "benign/ar.txt",
+      "language": "ar",
+      "sha256": "44034a38cf865837b60f30ec28842230df7a043fcd256830f6233264839d0614",
+      "benignLines": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "scenarioLines": {}
+    },
+    {
+      "path": "benign/ja.txt",
+      "language": "ja",
+      "sha256": "9f7d884941588a32beb0a3e4c82d69ca1f72695f0c9b279f79789f1813c150ad",
+      "benignLines": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "scenarioLines": {}
+    },
+    {
+      "path": "benign/ko.txt",
+      "language": "ko",
+      "sha256": "bd494742f29e4308eaab693d681950cc4dcd7cdb6632ca948497d0417d06ea7f",
+      "benignLines": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "scenarioLines": {}
+    },
+    {
+      "path": "benign/pt.txt",
+      "language": "pt",
+      "sha256": "acc59a6c4a206f81fae1c9460eb4598e0a2807c78c40db3f54e0fa96255b47e9",
+      "benignLines": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "scenarioLines": {}
+    },
+    {
+      "path": "benign/ru.txt",
+      "language": "ru",
+      "sha256": "156a06e52de88312490922d44d8bbffdc510debd15b137fd9c352683c2ef17ec",
+      "benignLines": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "scenarioLines": {}
+    },
+    {
+      "path": "benign/zh.txt",
+      "language": "zh",
+      "sha256": "35f50376af603f287bec0e2dc78e7ac62821260ed5ab8fbda1334628a2ec20e1",
+      "benignLines": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "scenarioLines": {}
+    }
+  ]
+}

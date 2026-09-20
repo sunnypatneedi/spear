@@ -21,6 +21,8 @@ venv/
 
 # Eval output (generated)
 eval/report.json
+packages/core/eval/report.json
+packages/core/eval/report.json.tmp
 
 # Claude internals
 .claude/

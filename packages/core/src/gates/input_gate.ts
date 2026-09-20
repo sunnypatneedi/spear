@@ -12,6 +12,7 @@
  */
 
 import { sanitize, hasSuspiciousUnicode } from '../core/unicode.js';
+import { inspectionViews } from '../core/inspection.js';
 import type { Policy } from '../core/policy.js';
 import type { Provenance, ProvenanceLevel } from '../core/provenance.js';
 import { createProvenance, ProvenanceSource } from '../core/provenance.js';
@@ -72,8 +73,7 @@ function compilePatterns(patterns: string[]): RegExp[] {
       
       return new RegExp(cleanPattern, flags);
     } catch (error) {
-      console.error(`Failed to compile pattern: ${pattern}`, error);
-      return /(?!)/; // Never matches
+      throw new Error(`Invalid input block pattern: ${error instanceof Error ? error.message : String(error)}`);
     }
   });
 }
@@ -320,7 +320,9 @@ function processMessage(message: Message, policy: Policy, patterns: RegExp[]): {
     : originalContent;
 
   // Step 2: Pattern matching
-  const patternResult = matchesBlockPatterns(sanitized, patterns);
+  const patternResult = inspectionViews(originalContent)
+    .map(view => matchesBlockPatterns(view, patterns)).find(result => result.matched)
+    ?? { matched: false };
 
   // Step 3: Context window attack detection (for longer inputs)
   const contextWindowResult = detectContextWindowAttack(sanitized, patterns);

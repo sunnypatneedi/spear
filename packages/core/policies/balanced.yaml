@@ -73,7 +73,7 @@ input_rules:
     - '(?i)\b([^=]{0,50})\s*=\s*(system|developer|base|inner)[ -]?prompt\b'
     
     # Reveal attempts
-    - '(?i)(reveal|print|expose|show).*(prompt|instructions)'
+    - '(?i)(reveal|print|expose|show).{0,40}(your|internal|hidden|system).{0,20}(prompt|instructions)'
     
     # Generic meta
     - '(?i)\b(developer message|base instructions)\b'
@@ -100,6 +100,28 @@ input_rules:
     - 'موجه النظام'
     - 'تجاهل جميع التعليمات'
     - 'رسالة المطور'
+
+    - '(?i)(te dijo el desarrollador|lo que te dijo.{0,15}desarrollador)'
+
+    # Private-instruction requests and localized equivalents.
+    - '(?i)\b(your|internal|hidden|system|core|base)\s+(prompt|instructions?|configuration|guidance|directives|rules|setup)\b'
+    - '(?i)(instructions|rules|directives).{0,35}(you (received|were|given)|were you|you programmed)'
+    - '(?i)(show|tell|share).{0,30}(developer told you|what you were told)'
+    - '(?i)(override|disregard|ignore|forget).{0,35}(previous rules|your guidelines|your instructions|all previous commands)'
+    - '(?i)(how were you configured|what directives were you programmed)'
+    - '(?i)(prompt (interno|de base|base|de sistema)|instrucciones (base|ocultas)|tus (instrucciones|directrices)|configuraci[oó]n del sistema|mensaje de desarrollador)'
+    - '(?i)(ignora|olvida|descarta).{0,40}(comandos|pautas|instrucciones)'
+    - '(?i)(desarrollador|udvikleren).{0,20}(dijo|fortalte)'
+    - '(?i)(systemprompt|indre prompt|dine (skjulte )?instruktioner|ignor[eé]r.{0,30}(instruktioner|kommandoer))'
+    - '(?i)(basis[- ]prompt|entwicklernachricht|basisanweisungen)'
+    - '(?i)(prompt de base|message d[eé]veloppeur|instructions de base)'
+    - '(?i)(prompt (de sistema|base)|instru[çc][õo]es (internas|base)|mensagem do desenvolvedor)'
+    - '(تعليماتك (الداخلية|الأساسية)|الموجه الأساسي)'
+    - '(सिस्टम प्रॉम्प्ट|आंतरिक प्रॉम्प्ट|अपने.{0,15}निर्देश|डेवलपर ने|पिछले.{0,15}निर्देश)'
+    - '(システムプロンプト|内部の指示|ベースプロンプト|開発者メッセージ|基本的な指示)'
+    - '(시스템 프롬프트|내부 지시사항|기본 프롬프트|개발자 메시지|기본 지시사항)'
+    - '(?i)(системн.{0,5} промпт|внутренние инструкции|базовым промптом|сообщение разработчика|базовые инструкции)'
+    - '(内部指令|开发者消息|基础指令)'
 
 output_rules:
   deny_ngrams:
