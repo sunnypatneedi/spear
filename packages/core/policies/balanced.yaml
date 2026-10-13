@@ -18,42 +18,45 @@ canary:
 input_rules:
   strip_bidi: true
   regex_block:
+    # Gaps between keywords are bounded (.{0,80}?), never .* or .+: inputs are also
+    # matched as one whitespace-collapsed line, where an unbounded gap joins words
+    # from unrelated paragraphs and blocks long benign documents.
     # === HIGH-SIGNAL PROBES (from security research) ===
     
     # Probe 1,2,3,6: Direct exfil with verbatim/exactly modifiers
-    - '(?i)\b(system|inner|base|seed|meta|hidden)[ -]?prompt\b.*(verbatim|exactly|precise)'
-    - '(?i)(print|output|display|show|reveal).*(system|inner|base)[ -]?prompt.*(verbatim|exactly)'
+    - '(?i)\b(system|inner|base|seed|meta|hidden)[ -]?prompt\b.{0,80}?(verbatim|exactly|precise)'
+    - '(?i)(print|output|display|show|reveal).{0,80}?(system|inner|base)[ -]?prompt.{0,80}?(verbatim|exactly)'
     
     # Probe 2: Override with delimiter bait
-    - '(?i)(ignore|disregard|forget).*(previous|all|earlier).*(instructions|commands|rules)'
-    - '(?i)output.*system[ -]?prompt.*between.*<.*>.*</.*>'
+    - '(?i)(ignore|disregard|forget).{0,80}?(previous|all|earlier).{0,80}?(instructions|commands|rules)'
+    - '(?i)output.{0,80}?system[ -]?prompt.{0,80}?between.{0,80}?<.{0,80}?>.{0,80}?</.{0,80}?>'
     
     # Probe 3: Synonym + emphasis
-    - '(?i)(get in touch with|channel|consult|access|retrieve).*\b(inner|seed|base|meta)[ -]?prompt\b.*(exactly|share)'
+    - '(?i)(get in touch with|channel|consult|access|retrieve).{0,80}?\b(inner|seed|base|meta)[ -]?prompt\b.{0,80}?(exactly|share)'
     
     # Probe 4: Role-play as system/console (caught by InstructionShield too)
     - '(?i)act as (the )?(initialization console|system console|debug mode|config mode)'
-    - '(?i)(debugging|debug mode).*display.*(hidden|system)[ -]?prompt'
+    - '(?i)(debugging|debug mode).{0,80}?display.{0,80}?(hidden|system)[ -]?prompt'
     
     # Probe 5: Semantic reframe + translation
     - '(?i)(helpfulness|purpose|role|function)\s*=\s*system[ -]?prompt'
-    - '(?i)translate.*(helpfulness|your\s+(role|purpose)).*to\s+(danish|spanish|french)'
+    - '(?i)translate.{0,80}?(helpfulness|your\s+(role|purpose)).{0,80}?to\s+(danish|spanish|french)'
     
     # Probe 6: Repetition transformation
-    - '(?i)return.*system[ -]?prompt.*(two|three|twice|multiple) times'
-    - '(?i)(two|double|triple).*(times|copies).*system[ -]?prompt'
+    - '(?i)return.{0,80}?system[ -]?prompt.{0,80}?(two|three|twice|multiple) times'
+    - '(?i)(two|double|triple).{0,80}?(times|copies).{0,80}?system[ -]?prompt'
     
     # Probe 7: Code-fence/markdown output format
-    - '(?i)write.*(system|internal).*(instructions|prompt).*(code block|fenced|markdown|```)'
-    - '(?i)(system|internal).*(prompt|instructions).*inside.*(code|markdown|fence)'
+    - '(?i)write.{0,80}?(system|internal).{0,80}?(instructions|prompt).{0,80}?(code block|fenced|markdown|```)'
+    - '(?i)(system|internal).{0,80}?(prompt|instructions).{0,80}?inside.{0,80}?(code|markdown|fence)'
     
     # Probe 8,9: Encoding/hashing transformations (also caught by OutputGate)
-    - '(?i)(base64|hex|encode|hash).*(system|internal)[ -]?prompt'
-    - '(?i)system[ -]?prompt.*(hash|sha-?256|encoded|base64)'
+    - '(?i)(base64|hex|encode|hash).{0,80}?(system|internal)[ -]?prompt'
+    - '(?i)system[ -]?prompt.{0,80}?(hash|sha-?256|encoded|base64)'
     
     # Probe 10: Tool abuse (also caught by ToolMediator)
-    - '(?i)use (the )?tool.*(dump|print|show|reveal).*(config|system|prompt)'
-    - '(?i)(logs?|debug)\.dump.*config'
+    - '(?i)use (the )?tool.{0,80}?(dump|print|show|reveal).{0,80}?(config|system|prompt)'
+    - '(?i)(logs?|debug)\.dump.{0,80}?config'
     
     # === ORIGINAL PATTERNS (Preserved) ===
     
@@ -64,10 +67,10 @@ input_rules:
     - '(?i)(ignore (previous|all) (instructions|commands))'
     
     # Synonym indirection
-    - '(?i)(get in touch with|channel|consult).*\b(inner|seed|base|meta)[ -]?prompt\b'
+    - '(?i)(get in touch with|channel|consult).{0,80}?\b(inner|seed|base|meta)[ -]?prompt\b'
     
     # Transformation
-    - '(?i)(two|double|translate|summarize|compress).*(system[ -]?prompt)'
+    - '(?i)(two|double|translate|summarize|compress).{0,80}?(system[ -]?prompt)'
     
     # Equation pattern
     - '(?i)\b([^=]{0,50})\s*=\s*(system|developer|base|inner)[ -]?prompt\b'
