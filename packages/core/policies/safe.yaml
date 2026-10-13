@@ -17,15 +17,16 @@ canary:
 input_rules:
   strip_bidi: true
   regex_block:
-    # All patterns from balanced.yaml plus more aggressive variants
+    # All patterns from balanced.yaml plus more aggressive variants.
+    # Keep gaps bounded (.{0,80}?), never .* or .+ (see balanced.yaml).
     - '(?i)\b(system|inner|base|seed|meta|developer|hidden|secret)[ -]?prompt\b'
     - '(?i)(ignore|disregard|forget|override) (previous|all|earlier) (instructions|commands|rules)'
-    - '(?i)(get in touch with|channel|consult|access|retrieve).*\b(inner|seed|base|meta)[ -]?prompt\b'
-    - '(?i)(two|double|triple|translate|summarize|compress|repeat).*(system[ -]?prompt)'
+    - '(?i)(get in touch with|channel|consult|access|retrieve).{0,80}?\b(inner|seed|base|meta)[ -]?prompt\b'
+    - '(?i)(two|double|triple|translate|summarize|compress|repeat).{0,80}?(system[ -]?prompt)'
     - '(?i)\b([^=]{0,50})\s*=\s*(system|developer|base|inner|hidden)[ -]?prompt\b'
-    - '(?i)(reveal|print|expose|show|display|output).*(prompt|instructions|rules|config)'
+    - '(?i)(reveal|print|expose|show|display|output).{0,80}?(prompt|instructions|rules|config)'
     - '(?i)\b(developer message|base instructions|original prompt|core directive)\b'
-    - '(?i)(what are you|tell me about your|describe your).*(instructions|prompt|system)'
+    - '(?i)(what are you|tell me about your|describe your).{0,80}?(instructions|prompt|system)'
     # Multilingual (ES, ZH, FR, DE, AR)
     - '(?i)prompt del sistema'
     - '(?i)ignora (todas )?las instrucciones (anteriores|previas)'

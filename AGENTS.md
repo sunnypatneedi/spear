@@ -107,6 +107,7 @@ See `.github/workflows/ci.yml` for enforcement.
 | Don't | Do | Why |
 |-------|-----|-----|
 | Module-level `/g` regex with `.test()` | Inline non-`/g` literals for `.test()` | `.test()` advances `lastIndex` — alternating calls return wrong result |
+| `.*` / `.+` gaps in policy `regex_block` | Bounded gaps, e.g. `.{0,80}?` | Inputs are also matched whitespace-collapsed; an unbounded gap joins words from unrelated paragraphs and blocks long benign docs (enforced by `tests/bounded-patterns.test.ts`) |
 | `catch { return getDefaultPolicy() }` | `catch { throw new Error('Policy load failed') }` | Silent fallback = tests pass against empty policy |
 | Bare `__dirname` in test files | ESM `fileURLToPath` shim | Undefined in ESM — causes `ReferenceError` |
 | Import without `.js` extension | Always include `.js` in imports | NodeNext module resolution requires it |

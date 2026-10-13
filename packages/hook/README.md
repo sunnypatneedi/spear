@@ -6,7 +6,7 @@ Ultra-compact prompt injection defense hook for Claude Code.
 
 ## What It Does
 
-SPEAR Hook intercepts tool outputs in Claude Code and scans for prompt injection attacks before Claude processes them. When an attack is detected, it injects a warning into Claude's context:
+SPEAR Hook intercepts tool outputs in Claude Code (the PostToolUse `tool_response`) and scans every text field for prompt injection attacks before Claude processes them. When an attack is detected, it adds a warning next to the tool result in Claude's context (`hookSpecificOutput.additionalContext`) and shows the same warning to you (`systemMessage`):
 
 ```
 [SPEAR] Potential prompt injection detected in WebFetch output:
@@ -34,7 +34,9 @@ curl -o ~/.claude/hooks/spear-hook.mjs \
 chmod +x ~/.claude/hooks/spear-hook.mjs
 ```
 
-2. Create or update `.claude/hooks.json` in your project:
+2. Add the hook to a Claude Code settings file: `.claude/settings.json` (this project, shareable),
+   `.claude/settings.local.json` (this project, just you) or `~/.claude/settings.json` (all projects).
+   Merge with any `hooks` already there. A standalone `.claude/hooks.json` is not read by Claude Code.
 
 ```json
 {

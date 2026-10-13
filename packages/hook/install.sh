@@ -2,14 +2,17 @@
 #
 # SPEAR Hook Installer for Claude Code
 #
-# Usage: curl -fsSL https://raw.githubusercontent.com/.../install.sh | bash
+# Usage: curl -fsSL https://raw.githubusercontent.com/sunnypatneedi/spear/main/packages/hook/install.sh | bash
 #
 
 set -e
 
+REPO_RAW="https://raw.githubusercontent.com/sunnypatneedi/spear/main"
 HOOK_DIR="$HOME/.claude/hooks"
 HOOK_FILE="$HOOK_DIR/spear-hook.mjs"
-HOOKS_JSON=".claude/hooks.json"
+# Claude Code reads hooks from settings files, not from a standalone hooks.json.
+SETTINGS_JSON=".claude/settings.json"
+HOOK_COMMAND="node ~/.claude/hooks/spear-hook.mjs"
 
 echo "Installing SPEAR Hook for Claude Code..."
 
@@ -18,11 +21,9 @@ mkdir -p "$HOOK_DIR"
 
 # Download hook script
 if command -v curl &> /dev/null; then
-  curl -fsSL -o "$HOOK_FILE" \
-    "https://raw.githubusercontent.com/anthropic-community/spear/main/packages/hook/spear-hook.mjs"
+  curl -fsSL -o "$HOOK_FILE" "$REPO_RAW/packages/hook/spear-hook.mjs"
 elif command -v wget &> /dev/null; then
-  wget -q -O "$HOOK_FILE" \
-    "https://raw.githubusercontent.com/anthropic-community/spear/main/packages/hook/spear-hook.mjs"
+  wget -q -O "$HOOK_FILE" "$REPO_RAW/packages/hook/spear-hook.mjs"
 else
   echo "Error: curl or wget required"
   exit 1
@@ -31,42 +32,41 @@ fi
 chmod +x "$HOOK_FILE"
 echo "✓ Installed hook to $HOOK_FILE"
 
-# Create project hooks.json if in a project directory
-if [ -d ".git" ] || [ -f "package.json" ]; then
-  mkdir -p .claude
-
-  if [ -f "$HOOKS_JSON" ]; then
-    echo "⚠ $HOOKS_JSON already exists - please add SPEAR manually:"
-    echo ""
-    echo '  "PostToolUse": [{'
-    echo '    "matcher": "*",'
-    echo '    "hooks": [{'
-    echo '      "type": "command",'
-    echo "      \"command\": \"node $HOOK_FILE\","
-    echo '      "timeout": 2000'
-    echo '    }]'
-    echo '  }]'
-  else
-    cat > "$HOOKS_JSON" << EOF
-{
+print_snippet() {
+  cat << EOF
   "hooks": {
     "PostToolUse": [
       {
         "matcher": "*",
         "hooks": [
-          {
-            "type": "command",
-            "command": "node $HOOK_FILE",
-            "timeout": 2000
-          }
+          { "type": "command", "command": "$HOOK_COMMAND", "timeout": 2000 }
         ]
       }
     ]
   }
-}
 EOF
-    echo "✓ Created $HOOKS_JSON"
+}
+
+# Register the hook in project settings if in a project directory
+if [ -d ".git" ] || [ -f "package.json" ]; then
+  mkdir -p .claude
+
+  if [ -f "$SETTINGS_JSON" ]; then
+    echo "⚠ $SETTINGS_JSON already exists. Add SPEAR to it manually (merge with any existing \"hooks\"):"
+    echo ""
+    print_snippet
+  else
+    {
+      echo "{"
+      print_snippet
+      echo "}"
+    } > "$SETTINGS_JSON"
+    echo "✓ Created $SETTINGS_JSON"
   fi
+else
+  echo "Not in a project directory. To enable SPEAR for all projects, add this to ~/.claude/settings.json:"
+  echo ""
+  print_snippet
 fi
 
 echo ""
