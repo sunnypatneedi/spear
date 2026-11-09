@@ -1,0 +1,5 @@
+@font-face{font-family:'Gloock';font-weight:400;src:url(/node_modules/@fontsource/gloock/files/gloock-latin-400-normal.woff2) format('woff2')}
+@font-face{font-family:'Plex Mono';font-weight:500;src:url(/node_modules/@fontsource/ibm-plex-mono/files/ibm-plex-mono-latin-500-normal.woff2) format('woff2')}
+@font-face{font-family:'Plex Mono';font-weight:600;src:url(/node_modules/@fontsource/ibm-plex-mono/files/ibm-plex-mono-latin-600-normal.woff2) format('woff2')}
+html,body,#stage{background:#EFE4C8}
+#cv{position:absolute;left:0;top:0;width:1200px;height:630px}
