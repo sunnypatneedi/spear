@@ -26,7 +26,7 @@
   "license": "AGPL-3.0-only",
   "repository": {
     "type": "git",
-    "url": "https://github.com/anthropic-community/spear"
+    "url": "https://github.com/sunnypatneedi/spear"
   },
   "engines": {
     "node": ">=18.0.0"

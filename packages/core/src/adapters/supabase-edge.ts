@@ -25,7 +25,7 @@ export const defaultEdgePolicy: EdgePolicy = {
   inputPatterns: [
     '(?i)\\b(system|inner|base)[ -]?prompt\\b',
     '(?i)(ignore (previous|all) (instructions|commands))',
-    '(?i)(reveal|expose|show).*(prompt|instructions)'
+    '(?i)(reveal|expose|show).{0,80}?(prompt|instructions)'
   ],
   outputDenylist: [
     'system prompt',
